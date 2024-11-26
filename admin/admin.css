@@ -1,0 +1,168 @@
+*{
+    border: 0;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --primary-dark: #006064;
+    --primary-light: #e0f2f1;
+    --secondary: #b2dfdb;
+    --accent: #455a64;
+    --text-dark: #263238;
+    --text-light: #ffffff;
+}
+
+.table-primary {
+    --bs-table-color: #000000;
+    --bs-table-bg: #b2dfdb;
+    --bs-table-border-color: #a6b5cc;
+    --bs-table-striped-bg: #9edad5;
+    --bs-table-striped-color: #000;
+    --bs-table-active-bg: #b2dfdb;
+    --bs-table-active-color: #000;
+    --bs-table-hover-bg: #018488;
+    --bs-table-hover-color: #f4f0f0;
+    color: var(--bs-table-color);
+    border-color: var(--bs-table-border-color);
+}
+
+body {
+    display: flex;
+    background-color: white;
+    min-height: 100vh; /* Set minimum height to full viewport height */
+    margin: 0; /* Remove default margin */
+}
+
+#navigator {
+    width: 20%;
+    background-color: #006064;
+    padding: 0;
+    height: 100vh; /* Set height to full viewport height */
+    position: sticky; /* Make the navigator sticky */
+    top: 0; /* Stick to the top of the viewport */
+    overflow-y: auto; /* Add vertical scrolling if content overflows */
+}
+
+section {
+    width: 100%; /* Adjust width to take remaining space */
+    height: auto;
+    overflow-y: auto; /* Add vertical scrolling if content overflows */
+}
+
+ul{
+    list-style-type: none;
+    padding: 0;
+    margin-top: 2vw;
+}
+
+li{
+    font-size: 1.5vw;
+    font-weight: 600;
+    color: #e0f2f1;
+    padding-bottom: 1vw;
+    padding-top: 1vw;
+    padding-left: 1vw;
+}
+
+li:hover{
+    background-color: #e0f2f1;
+    color: #006064;
+}
+
+a{
+    text-decoration: none;
+}
+
+a:hover{
+    color:white
+}
+
+
+
+#notifs{
+    padding-left: 1vw;
+    border: solid #a6b5cc 1px;
+    width: 100%;
+    height: 4vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#notifs h5{
+    font-size: 1.5vw;
+    margin-bottom: 0;
+    font-style: italic;
+}
+
+
+#notifs:hover{
+    color: #018488;
+}
+
+#notifications a{
+    color: #000;
+}
+
+#notifs > div {
+    font-size: 1vw;
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.card-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.display-4 {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+#lotStatusChart {
+    height: 300px;
+    flex-grow: 1;
+}
+
+#recentReservationsTable {
+    width: 100%;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: var(--primary-dark);
+    color: var(--text-light) !important;
+    border-color: var(--primary-dark);
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: var(--secondary);
+    color: var(--text-dark) !important;
+    border-color: var(--secondary);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: var(--primary-light);
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--secondary);
+}
