@@ -13,145 +13,149 @@
     $totalRevenue = $class->getTotalRevenue($startDate, $endDate);
     $pendingPayments = $class->getPendingPaymentsThisMonth();
     $latePayments = $class->getLatePayments();
-
-    $baseUrl = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https://" : "http://";
-    $baseUrl .= $_SERVER['HTTP_HOST'];
-    $baseUrl .= dirname($_SERVER['PHP_SELF']);
-
-    // Add this debugging code at the top after the require statements
-    echo "<!-- Current script path: " . $_SERVER['SCRIPT_NAME'] . " -->\n";
-    echo "<!-- PHP Self: " . $_SERVER['PHP_SELF'] . " -->\n";
-    echo "<!-- Document Root: " . $_SERVER['DOCUMENT_ROOT'] . " -->\n";
 ?>
 
-<div class="container-fluid mt-4">
-    <form class="mb-4" method="GET" action="">
-        <div class="row">
-            <div class="col-md-4">
-                <label for="start_date" class="form-label">Start Date:</label>
-                <input type="date" class="form-control" id="start_date" name="start_date" value="<?php echo $startDate; ?>">
+<div class="dashboard-container">
+    <!-- Date Filter Section -->
+    <div class="filter-section">
+        <form method="GET" action="">
+            <div class="date-filters">
+                <div class="date-input">
+                    <label for="start_date">Start Date</label>
+                    <input type="date" id="start_date" name="start_date" value="<?php echo $startDate; ?>">
+                </div>
+                <div class="date-input">
+                    <label for="end_date">End Date</label>
+                    <input type="date" id="end_date" name="end_date" value="<?php echo $endDate; ?>">
+                </div>
+                <button type="submit" class="filter-btn">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
             </div>
-            <div class="col-md-4">
-                <label for="end_date" class="form-label">End Date:</label>
-                <input type="date" class="form-control" id="end_date" name="end_date" value="<?php echo $endDate; ?>">
-            </div>
-            <div class="col-md-4 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary">Filter Revenue</button>
-            </div>
-        </div>
-    </form>
+        </form>
+    </div>
 
-    <div class="row">
-        <div class="col-md-4 mb-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Total Lots</h5>
-                    <p class="card-text display-4"><?php echo $totalLots; ?></p>
-                </div>
+    <!-- Stats Cards Section -->
+    <div class="stats-grid">
+        <div class="stat-card primary">
+            <div class="stat-icon">
+                <i class="fas fa-layer-group"></i>
+            </div>
+            <div class="stat-details">
+                <h3>Total Lots</h3>
+                <p class="stat-number"><?php echo $totalLots; ?></p>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Available Lots</h5>
-                    <p class="card-text display-4"><?php echo $totalAvailableLots; ?></p>
-                </div>
+
+        <div class="stat-card success">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-details">
+                <h3>Available Lots</h3>
+                <p class="stat-number"><?php echo $totalAvailableLots; ?></p>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Total Reservations</h5>
-                    <p class="card-text display-4"><?php echo $totalReservations; ?></p>
-                </div>
+
+        <div class="stat-card info">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stat-details">
+                <h3>Total Reservations</h3>
+                <p class="stat-number"><?php echo $totalReservations; ?></p>
+            </div>
+        </div>
+
+        <div class="stat-card warning">
+            <div class="stat-icon">
+                <i class="fas fa-peso-sign"></i>
+            </div>
+            <div class="stat-details">
+                <h3>Total Revenue<?php echo ($startDate || $endDate) ? ' (Filtered)' : ''; ?></h3>
+                <p class="stat-number">₱<?php echo number_format($totalRevenue, 2); ?></p>
+                <?php if ($startDate || $endDate): ?>
+                    <small class="date-range">
+                        <?php 
+                        echo $startDate ? "From: " . date('M d, Y', strtotime($startDate)) : ""; 
+                        echo $startDate && $endDate ? " - " : "";
+                        echo $endDate ? "To: " . date('M d, Y', strtotime($endDate)) : "";
+                        ?>
+                    </small>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <div class="stat-card secondary">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-details">
+                <h3>Pending Payments</h3>
+                <p class="stat-number"><?php echo $pendingPayments; ?></p>
+            </div>
+        </div>
+
+        <div class="stat-card danger">
+            <div class="stat-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-details">
+                <h3>Late Payments</h3>
+                <p class="stat-number"><?php echo $latePayments; ?></p>
             </div>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-4 mb-3">
-            <div class="card bg-warning text-dark">
-                <div class="card-body">
-                    <h5 class="card-title">Total Revenue<?php echo ($startDate || $endDate) ? ' (Filtered)' : ''; ?></h5>
-                    <p class="card-text display-4">₱<?php echo number_format($totalRevenue, 2); ?></p>
-                    <?php if ($startDate || $endDate): ?>
-                        <small>
-                            <?php 
-                            echo $startDate ? "From: " . date('M d, Y', strtotime($startDate)) : ""; 
-                            echo $startDate && $endDate ? " - " : "";
-                            echo $endDate ? "To: " . date('M d, Y', strtotime($endDate)) : "";
-                            ?>
-                        </small>
-                    <?php endif; ?>
-                </div>
+    <!-- Charts Section -->
+    <div class="charts-section">
+        <div class="chart-card">
+            <h3>Lot Status Distribution</h3>
+            <div class="chart-container">
+                <canvas id="lotStatusChart"></canvas>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
-            <div class="card bg-secondary text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Pending Payments This Month</h5>
-                    <p class="card-text display-4"><?php echo $pendingPayments; ?></p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4 mb-3">
-            <div class="card bg-danger text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Late Payments</h5>
-                    <p class="card-text display-4"><?php echo $latePayments; ?></p>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="row mt-4">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Lot Status Distribution</h5>
-                    <div style="position: relative; height: 300px;">
-                        <canvas id="lotStatusChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Recent Confirmed Reservations</h5>
-                    <table id="recentReservationsTable" class="table table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Lot Name</th>
-                                <th>Reserved By</th>
-                                <th>Reservation Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
-                </div>
+        <div class="chart-card">
+            <h3>Recent Reservations</h3>
+            <div class="dashboard-recent-reservations">
+                <table id="recentReservationsTable" class="table">
+                    <thead>
+                        <tr>
+                            <th>Lot Name</th>
+                            <th>Reserved By</th>
+                            <th>Reservation Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap5.min.css">
-<script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Lot Status Chart
     var ctx = document.getElementById('lotStatusChart').getContext('2d');
     var lotStatusChart = new Chart(ctx, {
-        type: 'pie',
+        type: 'doughnut',
         data: {
             labels: ['Available', 'Reserved', 'On Request'],
             datasets: [{
-                data: [<?php echo $totalAvailableLots; ?>, <?php echo $totalReservations; ?>, <?php echo $totalLots - $totalAvailableLots - $totalReservations; ?>],
-                backgroundColor: ['#28a745', '#007bff', '#ffc107']
+                data: [
+                    <?php echo $totalAvailableLots; ?>, 
+                    <?php echo $totalReservations; ?>, 
+                    <?php echo $totalLots - $totalAvailableLots - $totalReservations; ?>
+                ],
+                backgroundColor: ['#28a745', '#007bff', '#ffc107'],
+                borderWidth: 0
             }]
         },
         options: {
@@ -159,57 +163,35 @@ document.addEventListener('DOMContentLoaded', function() {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'bottom'
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        font: {
+                            size: 12
+                        }
+                    }
                 }
-            }
+            },
+            cutout: '70%'
         }
     });
 
+    // Simplified DataTable
     $('#recentReservationsTable').DataTable({
         ajax: {
-            url: 'get_recent_reservations.php',
-            dataSrc: function(json) {
-                if (json.error) {
-                    console.error('Server error:', json.message);
-                    return [];
-                }
-                return json || [];
-            },
-            error: function (xhr, error, thrown) {
-                console.error('Ajax error:', {
-                    status: xhr.status,
-                    statusText: xhr.statusText,
-                    responseText: xhr.responseText,
-                    error: error,
-                    thrown: thrown
-                });
-            }
+            url: 'dashboard/get_recent_reservations.php',
+            dataSrc: ''
         },
         columns: [
             { data: 'lot_name' },
             { data: 'reserved_by' },
-            { 
-                data: 'reservation_date',
-                render: function(data) {
-                    return data || '';
-                }
-            }
+            { data: 'reservation_date' }
         ],
-        order: [],
         pageLength: 5,
-        lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
-        ordering: false,
-        searching: false,
-        info: false,
-        language: {
-            emptyTable: "No recent reservations found",
-            zeroRecords: "No matching reservations found"
-        },
-        processing: true
+        searching: false,    // Remove search
+        lengthChange: false, // Remove show entries dropdown
+        paging: false,       // Remove pagination
+        info: false         // Remove showing X of Y entries text
     });
 });
 </script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-</body>
-</html>

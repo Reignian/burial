@@ -10,23 +10,33 @@ class Notifications_class{
         $this->db = new Database();
     }
 
-    function showrequest() {
-        $sql = "SELECT *, 
-                       CASE 
-                           WHEN request = 'Pending' THEN 'New reservation request'
-                           WHEN request = ('Confirmed' OR 'Cancelled') THEN 'Reservation request'
-                           ELSE 'Unknown status' 
-                       END as message
-                FROM reservation ORDER BY created_at DESC;";
+    function showrequest($limit = 10, $offset = 0) {
+        $sql = "SELECT * FROM reservation 
+                ORDER BY 
+                    CASE 
+                        WHEN request = 'Pending' THEN 1 
+                        ELSE 2 
+                    END,
+                    created_at DESC 
+                LIMIT :limit OFFSET :offset";
         
         $query = $this->db->connect()->prepare($sql);
+        $query->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $query->bindValue(':offset', $offset, PDO::PARAM_INT);
         $data = null;
-    
+
         if($query->execute()){
             $data = $query->fetchAll();
         }
-    
+
         return $data;
+    }
+
+    function getTotalNotifications() {
+        $sql = "SELECT COUNT(*) FROM reservation";
+        $query = $this->db->connect()->prepare($sql);
+        $query->execute();
+        return $query->fetchColumn();
     }
 
     function account($reservation_id) {
@@ -133,6 +143,13 @@ class Notifications_class{
         } else {
             return false;
         }
+    }
+
+    function getPendingNotificationsCount() {
+        $sql = "SELECT COUNT(*) FROM reservation WHERE request = 'Pending'";
+        $query = $this->db->connect()->prepare($sql);
+        $query->execute();
+        return $query->fetchColumn();
     }
 
 }

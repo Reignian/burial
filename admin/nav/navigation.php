@@ -1,6 +1,7 @@
 <?php
 
   session_start();
+  require_once __DIR__ . '/../notifications/notifications.class.php';
 
     if(isset($_SESSION['account'])){
         if(!$_SESSION['account']['is_admin']){
@@ -9,6 +10,9 @@
     }else{
         header('location: ../sign/login.php');
     }
+
+    $notifObj = new Notifications_class();
+    $pendingCount = $notifObj->getPendingNotificationsCount();
 ?>
 
 <!DOCTYPE html>
@@ -69,36 +73,82 @@
         }
 
         .content {
+            flex: 1;
             margin-left: 250px;
             padding: 0;
             transition: all 0.3s;
+            width: calc(100% - 250px);
         }
 
         @media (max-width: 768px) {
             .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
+                width: 250px;
+                height: 100vh;
+                position: fixed;
             }
             .content {
-                margin-left: 0;
+                margin-left: 250px;
+                width: calc(100% - 250px);
             }
-            .sidebar-menu {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
+        }
+
+        /* New media query for mobile devices */
+        @media (max-width: 576px) {
+            .sidebar {
+                width: 70px;
+                height: 100vh;
+                position: fixed;
+            }
+            .content {
+                margin-left: 70px;
+                width: calc(100% - 70px);
+            }
+            .sidebar-header {
+                padding: 10px 5px;
+            }
+            .sidebar-header h3 {
+                display: none;
+            }
+            .menu-text {
+                display: none;
             }
             .sidebar-menu li {
-                padding: 10px;
-            }
-            .sidebar-menu a {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
+                padding: 15px 0;
+                display: flex;
+                justify-content: center;
             }
             .sidebar-menu .icon {
                 margin-right: 0;
-                margin-bottom: 5px;
+                font-size: 20px;
+            }
+            
+            .payments-menu .submenu {
+                position: absolute;
+                left: 100%;
+                top: 0;
+                width: 200px;
+                z-index: 1000;
+            }
+            
+            .payments-menu .submenu li {
+                padding: 15px;
+                justify-content: flex-start;
+            }
+            
+            .payments-menu .submenu .menu-text {
+                display: inline;
+                margin-left: 10px;
+            }
+            
+            .notification-badge {
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                transform: none;
+            }
+            
+            .menu-item-wrapper {
+                justify-content: center;
             }
         }
 
@@ -149,6 +199,40 @@
         .dropdown-icon {
             all: unset;
         }
+
+        .notification-badge {
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            position: absolute;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            min-width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .menu-item-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .notification-badge {
+                position: absolute;
+                top: 0;
+                right: 50%;
+                transform: translate(150%, 0);
+            }
+        }
     </style>
 </head>
 <body>
@@ -176,7 +260,19 @@
                 </li>
             </ul>
         </li>
-        <li><a href="notifications.php" id="notifications-link" class="nav-link"><i class="fas fa-bell icon"></i><span class="menu-text">Notifications</span></a></li>
+        <li>
+            <a href="notifications.php" id="notifications-link" class="nav-link">
+                <div class="menu-item-wrapper">
+                    <div style="display: flex; align-items: center;">
+                        <i class="fas fa-bell icon"></i>
+                        <span class="menu-text">Notifications</span>
+                    </div>
+                    <?php if ($pendingCount > 0): ?>
+                        <span class="notification-badge"><?= $pendingCount ?></span>
+                    <?php endif; ?>
+                </div>
+            </a>
+        </li>
         <li><a href="generate_report.php"><i class="fas fa-file-lines icon"></i><span class="menu-text">Generate Report</span></a></li>
         <li><a href="../sign/logout.php"><i class="fas fa-sign-out-alt icon"></i><span class="menu-text">Logout</span></a></li>
     </ul>
