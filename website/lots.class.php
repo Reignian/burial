@@ -122,14 +122,21 @@ class Reservation{
         // Convert annual interest rate to monthly
         $monthlyInterestRate = ($paymentPlan['interest_rate'] / 100) / 12;
         $numberOfPayments = $paymentPlan['duration'];
-        // Amortization formula
-        if ($monthlyInterestRate > 0) {
-            $monthlyPayment = $principalAmount * 
-                            ($monthlyInterestRate * pow(1 + $monthlyInterestRate, $numberOfPayments)) / 
-                            (pow(1 + $monthlyInterestRate, $numberOfPayments) - 1);
+
+        // For spot cash, set monthly payment to total amount (no amortization needed)
+        if ($paymentPlan['plan'] === 'Spot Cash' || $paymentPlan['duration'] == 1) {
+            $monthlyPayment = $principalAmount;
+            $numberOfPayments = 1;  // Single payment for spot cash
         } else {
-            // If interest rate is 0, just divide the principal by the number of payments
-            $monthlyPayment = $principalAmount / $numberOfPayments;
+            // Amortization formula for installment plans
+            if ($monthlyInterestRate > 0) {
+                $monthlyPayment = $principalAmount * 
+                                ($monthlyInterestRate * pow(1 + $monthlyInterestRate, $numberOfPayments)) / 
+                                (pow(1 + $monthlyInterestRate, $numberOfPayments) - 1);
+            } else {
+                // If interest rate is 0, just divide the principal by the number of payments
+                $monthlyPayment = $principalAmount / $numberOfPayments;
+            }
         }
 
         // Calculate total balance

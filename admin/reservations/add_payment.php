@@ -12,6 +12,17 @@ $reservation_id = isset($_GET['reservation_id']) ? $_GET['reservation_id'] : '';
 $name = isset($_GET['name']) ? urldecode($_GET['name']) : '';
 $lot = isset($_GET['lot']) ? urldecode($_GET['lot']) : '';
 
+// Get payment plan and balance if reservation_id is set
+$payment_plan = '';
+$balance = 0;
+if (!empty($reservation_id)) {
+    $result = $burialObj->getReservationDetails($reservation_id);
+    if ($result) {
+        $payment_plan = $result['plan'];
+        $balance = $result['balance'];
+    }
+}
+
 if($_SERVER['REQUEST_METHOD'] == 'POST'){
     $reservation_id = clean_input(($_POST['reservation_id']));
     $amount_paid = clean_input(($_POST['amount_paid']));
@@ -171,6 +182,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
             border-color: #dc3545 !important;
         }
 
+        .info-text {
+            display: block;
+            color: #455a64;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
         /* Custom styling for jQuery UI Autocomplete */
         .ui-autocomplete {
             background-color: white;
@@ -214,11 +232,15 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
                 <label for="amount_paid">Amount <span class="error">*</span></label>
                 <input type="number" 
                        name="amount_paid" 
-                       value="<?= isset($_POST['amount_paid']) ? $amount_paid : '' ?>"
+                       value="<?= ($payment_plan === 'Spot Cash') ? $balance : (isset($_POST['amount_paid']) ? $amount_paid : '') ?>"
                        class="<?= !empty($amount_paidErr) ? 'error-field' : '' ?>"
+                       <?= ($payment_plan === 'Spot Cash') ? 'readonly' : '' ?>
                        placeholder="Enter payment amount">
                 <?php if (!empty($amount_paidErr)): ?>
                     <span class="error"><?= $amount_paidErr ?></span>
+                <?php endif; ?>
+                <?php if ($payment_plan === 'Spot Cash'): ?>
+                    <span class="info-text">Full payment required for Spot Cash plan</span>
                 <?php endif; ?>
             </div>
 

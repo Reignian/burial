@@ -33,6 +33,17 @@ class Reservation_class{
         return $query->fetchColumn() > 0;
     }
 
+    function getReservationDetails($reservation_id) {
+        $sql = "SELECT pp.plan, r.balance 
+                FROM reservation r 
+                JOIN payment_plan pp ON r.payment_plan_id = pp.payment_plan_id 
+                WHERE r.reservation_id = :reservation_id";
+        $query = $this->db->connect()->prepare($sql);
+        $query->bindParam(':reservation_id', $reservation_id);
+        $query->execute();
+        return $query->fetch(PDO::FETCH_ASSOC);
+    }
+
     public function cancelReservation($reservationID) {
         $this->db->connect()->beginTransaction();
 
