@@ -33,7 +33,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
         $burialObj->amount_paid = $amount_paid;
 
         if($burialObj->addPayment($reservation_id, $amount_paid)){
-            header('location: reservations.php');
+            header('location: ../reservations.php');
             exit;
         } else {
             echo 'Something went wrong when adding new product';

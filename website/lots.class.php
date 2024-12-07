@@ -149,11 +149,11 @@ class Reservation{
 
     
     function getReservationsByAccountId($account_id) {
-        $sql = "SELECT r.reservation_id, l.lot_name, r.reservation_date, pp.plan, r.balance, r.request
+        $sql = "SELECT r.reservation_id, l.*, r.reservation_date, pp.plan, r.balance, r.request
                 FROM reservation r
                 JOIN lots l ON r.lot_id = l.lot_id
                 JOIN payment_plan pp ON r.payment_plan_id = pp.payment_plan_id
-                WHERE r.account_id = :account_id
+                WHERE r.account_id = :account_id AND r.request = 'Confirmed'
                 ORDER BY r.reservation_date DESC";
 
         $query = $this->db->connect()->prepare($sql);
