@@ -66,6 +66,74 @@
         }
         .receipt-icon {
             color: #455a64;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .receipt-icon:hover {
+            color: #263238;
+        }
+        .modal-header {
+            background-color: #455a64;
+            color: white;
+            border-bottom: none;
+            padding: 1.5rem;
+        }
+        .modal-header .btn-close {
+            color: white;
+            filter: brightness(0) invert(1);
+        }
+        .modal-body {
+            padding: 2rem;
+            font-family: sans-serif;
+        }
+        .payment-details {
+            margin-bottom: 0;
+        }
+        .payment-details dt {
+            color: #455a64;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+        .payment-details dd {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+        .modal-divider {
+            height: 1px;
+            background-color: #e0e0e0;
+            margin: 1.5rem 0;
+        }
+        .receipt-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .receipt-header h6 {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .modal-footer {
+            border-top: none;
+            padding: 1.5rem;
+        }
+        .btn-print {
+            background-color: #455a64;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        .btn-print:hover {
+            background-color: #263238;
+            color: white;
+        }
+        .lot-card {
+            width: 425px;
+            min-width: 425px;
         }
         .payment-history {
             flex: 1;
@@ -76,10 +144,6 @@
             display: flex;
             flex-wrap: wrap;
             width: 100%;
-        }
-        .lot-card {
-            width: 425px;
-            min-width: 425px;
         }
         @media (max-width: 992px) {
             .lot-card {
@@ -157,8 +221,61 @@
                                         <h4 class="fw-bold">₱ <?= number_format($payment['amount_paid'], 2) ?></h4>
                                     </div>
                                     <div class="d-flex align-items-center">
-                                        <span class="me-2"><?= date('M d, Y', strtotime($payment['payment_date'])) ?></span>
-                                        <i class="bi bi-receipt receipt-icon"></i>
+                                        <span class="me-2"><?= date('F d, Y', strtotime($payment['payment_date'])) ?></span>
+                                        <i class="bi bi-receipt receipt-icon" data-bs-toggle="modal" data-bs-target="#paymentModal<?= $payment['payment_id'] ?>"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Payment Details Modal -->
+                            <div class="modal fade" id="paymentModal<?= $payment['payment_id'] ?>" tabindex="-1" aria-labelledby="paymentModalLabel<?= $payment['payment_id'] ?>" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="paymentModalLabel<?= $payment['payment_id'] ?>">Payment Receipt</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="receipt-header">
+                                                <h6>OFFICIAL RECEIPT</h6>
+                                                <h2>#<?= str_pad($payment['payment_id'], 6, '0', STR_PAD_LEFT) ?></h2>
+                                            </div>
+
+                                            <dl class="row payment-details">
+                                                <dt class="col-sm-4">Name</dt>
+                                                <dd class="col-sm-8">
+                                                    <?= $_SESSION['account']['first_name'] . ' ' . 
+                                                        $_SESSION['account']['middle_name'] . ' ' . 
+                                                        $_SESSION['account']['last_name'] ?>
+                                                </dd>
+
+                                                <div class="modal-divider"></div>
+
+                                                <dt class="col-sm-4">Amount Paid</dt>
+                                                <dd class="col-sm-8 fw-bold">₱ <?= number_format($payment['amount_paid'], 2) ?></dd>
+
+                                                <dt class="col-sm-4">Payment Date</dt>
+                                                <dd class="col-sm-8"><?= date('F d, Y', strtotime($payment['payment_date'])) ?></dd>
+
+                                                <div class="modal-divider"></div>
+
+                                                <dt class="col-sm-4">Lot Details</dt>
+                                                <dd class="col-sm-8">
+                                                    <p class="mb-1 fw-bold"><?= $reservation['lot_name'] ?></p>
+                                                    <p class="mb-1 text-muted"><?= $reservation['location'] ?></p>
+                                                    <p class="mb-0 text-muted"><?= $reservation['size'] ?> m²</p>
+                                                </dd>
+
+                                                <dt class="col-sm-4">Payment Plan</dt>
+                                                <dd class="col-sm-8"><?= $reservation['plan'] ?></dd>
+                                            </dl>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            <button type="button" class="btn btn-print" onclick="window.print()">
+                                                <i class="bi bi-printer me-2"></i>Print Receipt
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
