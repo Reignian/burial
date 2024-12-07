@@ -19,23 +19,37 @@
     $account_id = $_SESSION['account']['account_id'];
 
     if ($account_id) {
-        $account = $burialObj->fetchAccountRecord($account_id);
         $reservations = $burialObj->getReservationsByAccountId($account_id);
     }
 ?>
 
 <style>
-        .custom-bg {
-            background-color: #455a64;
-            color:#e0f2f1;
-        }
-        .lot-card {
-            background-color: white;
-            border-radius: 15px;
-            font-family: sans-serif;
-        }
+    .custom-bg {
+        background-color: #455a64;
+        color:#e0f2f1;
+    }
+    .lot-card {
+        background-color: white;
+        border-radius: 15px;
+        font-family: sans-serif;
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+    }
+    .lot-card.due-today {
+        background-color: #fff3cd;  /* Light yellow */
+    }
+    .lot-card.overdue {
+        background-color: #f8d7da;  /* Light red */
+    }
+    .lot-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .lot-link {
+        text-decoration: none;
+        color: inherit;
+    }
 </style>
-
 
 <div class="container-fluid p-0">
     
@@ -48,43 +62,56 @@
                 <i class="bi bi-gear"></i>
             </div>
         </div>
-
         <!-- Main Content -->
         <div class="container mt-4">
             <h3 class="mb-4">Reserved Lots</h3>
 
             <!-- Lot Card -->
-            <?php foreach ($reservations as $reservation): ?>
-
-                <div class="lot-card p-0 mb-4">
-                    <div class="row align-items-center">
-                        <div class="col-3 pl-3">
-                            <img src="admin/lots/<?= $reservation['lot_image'] ?>" alt="Lot Image" class="img-fluid rounded" style="width: 100%; height: 150px; object-fit: cover;">
-                        </div>
-                        <div class="col-8 m-3">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <h5 class="mb-1"><?= $reservation['lot_name'] ?></h5>
-                                    <p class="mb-1">Location: <?= $reservation['location'] ?></p>
-                                    <p class="mb-1">Size: <?= $reservation['size'] ?> m²</p>
-                                    <p class="mb-1">Price: ₱ <?= $reservation['price'] ?></p>
-                                </div>
-                                <div>
-                                    <p class="mb-1">Payment Plan: <?= $reservation['plan'] ?></p>
-                                    <p class="mb-1">Monthly Payment: </p>
-                                    <p class="mb-1">Due: </p>
-                                    <p class="mb-1">Date: <?= $reservation['reservation_date'] ?></p>
-                                </div>
-                                
-                                
-                                <div>
-                                    <p class="mb-1">Remaining Balance:</p>
-                                    <h5>₱ <?= $reservation['balance'] ?></h5>
+            <?php foreach ($reservations as $reservation): 
+                $balance = $burialObj->Balance($reservation['reservation_id']);
+                if ($balance <= 0) {
+                    $status = "<span style='font-weight: bold'>Paid</span>";
+                } else {
+                    $status = $burialObj->Duedate($reservation['reservation_id']);
+                }
+                $payment_status = $burialObj->getPaymentStatus($reservation['reservation_id']);
+                $card_class = '';
+                if ($payment_status === 'due_today') {
+                    $card_class = ' due-today';
+                } elseif ($payment_status === 'overdue') {
+                    $card_class = ' overdue';
+                }
+            ?>
+                <a href="transactions.php?reservation_id=<?= $reservation['reservation_id'] ?>" class="lot-link">
+                    <div class="lot-card p-0 mb-4<?= $card_class ?>">
+                        <div class="row align-items-center">
+                            <div class="col-3 pl-3">
+                                <img src="admin/lots/<?= $reservation['lot_image'] ?>" alt="Lot Image" class="img-fluid rounded" style="width: 100%; height: 150px; object-fit: cover;">
+                            </div>
+                            <div class="col-8 m-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="mb-1"><?= $reservation['lot_name'] ?></h5>
+                                        <p class="mb-1">Location: <?= $reservation['location'] ?></p>
+                                        <p class="mb-1">Size: <?= $reservation['size'] ?> m²</p>
+                                        <p class="mb-1">Price: ₱ <?= $reservation['price'] ?></p>
+                                    </div>
+                                    <div>
+                                        <p class="mb-1">Payment Plan: <?= $reservation['plan'] ?></p>
+                                        <p class="mb-1">Monthly Payment:  <?= '₱ ' . number_format($reservation['monthly_payment'], 2) ?></p>
+                                        <p class="mb-1">Due: <?= $status ?></p>
+                                        <p class="mb-1">Date: <?= date('F d, Y', strtotime($reservation['reservation_date'])) ?></p>
+                                    </div>
+                                    
+                                    <div>
+                                        <p class="mb-1">Remaining Balance:</p>
+                                        <h5 class="fw-bold"><?= '₱ ' . number_format($balance, 2) ?></h5>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
 
             <?php endforeach; ?>
 

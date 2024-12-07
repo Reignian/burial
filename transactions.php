@@ -22,29 +22,75 @@
         $account = $burialObj->fetchAccountRecord($account_id);
         $reservations = $burialObj->getReservationsByAccountId($account_id);
     }
-?>
 
+    // Get specific reservation if ID is provided
+    $selected_reservation = null;
+    $payments = [];
+    if (isset($_GET['reservation_id'])) {
+        $reservation_id = $_GET['reservation_id'];
+        foreach ($reservations as $reservation) {
+            if ($reservation['reservation_id'] == $reservation_id) {
+                $selected_reservation = $reservation;
+                // Fetch payments only for the selected reservation
+                $payments = $burialObj->getPayments($reservation_id);
+                $balance = $burialObj->Balance($reservation_id);
+                $next_payment = $burialObj->getNextPaymentSchedule($reservation_id);
+                break;
+            }
+        }
+    }
+
+    if ($selected_reservation) {
+        // If a specific reservation is selected, only show that one
+        $reservations = [$selected_reservation];
+    }
+
+?>
 <style>
         .custom-bg {
             background-color: #455a64;
             color:#e0f2f1;
         }
         .lot-info {
-            background-color: #7FFFD4;
+            background-color: white;
+            font-family: sans-serif;
         }
         .payment-record {
-            border: 1px solid #7FFFD4;
+            border: 1px solid #ddd;
             border-radius: 8px;
             margin-bottom: 10px;
+            background-color: white;
+        }
+        .payment-record {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .receipt-icon {
-            color: #7FFFD4;
+            color: #455a64;
         }
-
+        .payment-history {
+            flex: 1;
+            min-width: 300px;
+            margin-left: 20px;
+        }
         #payment-history-container {
             display: flex;
             flex-wrap: wrap;
             width: 100%;
+        }
+        .lot-card {
+            width: 425px;
+            min-width: 425px;
+        }
+        @media (max-width: 992px) {
+            .lot-card {
+                width: 100%;
+                min-width: 100%;
+            }
+            .payment-history {
+                width: 100%;
+                margin-left: 0;
+                margin-top: 20px;
+            }
         }
 </style>
 
@@ -63,56 +109,63 @@
 
         <!-- Main Content -->
         <div class="container mt-4">
-            <h3 class="mb-4">Payment History</h3>
-
             <div class="container mt-4" id="payment-history-container">
                 <!-- Lot Card -->
-                <div class="card border-0" style="min-width: 425px;">
+                <div class="card border-0 lot-card">
                     <!-- Image Section -->
-                    <img src="/placeholder.svg" class="card-img-top" alt="Lot Image" style="height: 200px; object-fit: cover;">
+                    <img src="admin/lots/<?= $reservation['lot_image'] ?>" class="card-img-top" alt="Lot Image" style="height: 200px; object-fit: cover;">
                     
                     <!-- Lot Information -->
                     <div class="lot-info p-3">
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
-                                <h5 class="mb-1">Lot 1</h5>
-                                <p class="mb-1">Block 2</p>
-                            </div>
-                            <div class="text-end">
-                                <p class="mb-1">25 m</p>
-                                <p class="mb-0">₱ 1000</p>
+                                <h2 class="mb-1"><?= $reservation['lot_name'] ?></h2>
+                                <h6 class="mb-1 text-muted"><?= $reservation['location'] ?></h6>
+                                <h6 class="mb-1 text-muted"><?= $reservation['size'] ?> m²</h6>
                             </div>
                         </div>
                     </div>
                     <div class="lot-info p-3">
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
-                                <h5 class="mb-1">Payment Plan: </h5>
-                                <p class="mb-1">Monthly Payment</p>
+                                <p class="mb-1">Payment Plan: </p>
+                                <p class="mb-1">Monthly Payment:</p>
                                 <p class="mb-1">Payment Schedule:</p>
                                 <p class="mb-1">Remaining Balance:</p>
+                            </div>
+                            <div class="text-end">
+                                <p class="mb-1"><?= $reservation['plan'] ?></p>
+                                <p class="mb-1"><?= '₱ ' . number_format($reservation['monthly_payment'], 2) ?></p>
+                                <p class="mb-1"><?= $next_payment ?></p>
+                                <p class="mb-1 fw-bold"><?= '₱ ' . number_format($balance, 2) ?></p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Payment Records -->
-                <div class="payment-history mt-4" style="max-width: 300px;">
-                    <!-- Repeated Payment Records -->
-                    <div class="payment-record p-2 mb-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span>Paid: ₱ 100</span>
-                            <div class="d-flex align-items-center">
-                                <span class="me-2">Dec. 08, 2024</span>
-                                <i class="bi bi-receipt receipt-icon"></i>
+                <div class="payment-history">
+                    <h4 class="mb-3">Payment Records</h4>
+                    <?php if (empty($payments)): ?>
+                        <div class="alert alert-info">No payment records found.</div>
+                    <?php else: ?>
+                        <?php foreach ($payments as $payment): ?>
+                            <div class="payment-record p-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span>Amount Paid:</span>
+                                        <h4 class="fw-bold">₱ <?= number_format($payment['amount_paid'], 2) ?></h4>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-2"><?= date('M d, Y', strtotime($payment['payment_date'])) ?></span>
+                                        <i class="bi bi-receipt receipt-icon"></i>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             </div>
-
-            
 
 
 
