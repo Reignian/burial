@@ -102,6 +102,23 @@ class WebsiteSettings {
         return $query->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function updateAboutMain($text, $image = null) {
+        if ($image) {
+            $sql = "UPDATE about_main SET text = ?, image = ? WHERE id = 1";
+            $query = $this->db->connect()->prepare($sql);
+            return $query->execute([$text, $image]);
+        } else {
+            $sql = "UPDATE about_main SET text = ? WHERE id = 1";
+            $query = $this->db->connect()->prepare($sql);
+            return $query->execute([$text]);
+        }
+    }
+
+
+
+
+
+
 
 
 

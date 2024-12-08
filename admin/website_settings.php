@@ -183,7 +183,7 @@
                         <button type="submit" name="update_about1" class="btn btn-primary" style="background-color: #006064; border: none;">Update</button>
                     </form>
 
-                    <!-- Cards Content -->
+                    <!-- About main Content -->
                     <h3 class="card-title text-uppercase mb-4" style="color: #006064;">Content</h3>
                     <form method="POST" action="settings/handle_website_settings.php" enctype="multipart/form-data" class="mb-4">
 
@@ -198,11 +198,11 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label class="form-label">Text</label>
-                            <input type="text" class="form-control" name="text" value="<?= $about_main[0]['text'] ?>">
+                            <label for="text" class="form-label">Text Content</label>
+                            <textarea class="form-control" id="text" name="text" rows="6"><?= htmlspecialchars($about_main[0]['text']) ?></textarea>
                         </div>
                         
-                        <button type="submit" name="update_card1" class="btn btn-primary" style="background-color: #006064; border: none;">Update</button>
+                        <button type="submit" name="update_main" class="btn btn-primary" style="background-color: #006064; border: none;">Update</button>
                     </form>
 
 
@@ -341,8 +341,6 @@
                         
                         <button type="submit" name="update_card4" class="btn btn-primary" style="background-color: #006064; border: none;">Update</button>
                     </form>
-
-                    <hr class="my-4">
 
 
                     <!-- Cards Content -->

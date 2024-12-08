@@ -27,10 +27,10 @@
         <?php $first = true; ?>
         <?php foreach ($array1 as $arr): ?>
             <div class="carousel-item <?= $first ? 'active' : '' ?>">
-                <img src="<?= $arr['image'] ?>" class="d-block w-100" alt="Sto. Nino Cemetery Pubmat">
+                <img src="<?= htmlspecialchars($arr['image']) ?>" class="d-block w-100" alt="Sto. Nino Cemetery Pubmat">
                 <div class="carousel-caption">
-                    <h2><?= $arr['heading'] ?></h2>
-                    <p><?= $arr['text'] ?></p>
+                    <h2><?= htmlspecialchars($arr['heading']) ?></h2>
+                    <p><?= nl2br(htmlspecialchars($arr['text'])) ?></p>
                 </div>
             </div>
             <?php if ($first) $first = false; ?>
@@ -56,10 +56,10 @@
 
             <div class="item">
                 <div class="card">
-                    <img src="<?= $arr['image'] ?>" class="card-img-top" alt="Lawn Lot">
+                    <img src="<?= htmlspecialchars($arr['image']) ?>" class="card-img-top" alt="Lawn Lot">
                     <div class="card-body">
-                        <h5 class="card-title"><?= $arr['heading'] ?></h5>
-                        <p class="card-text"><?= $arr['text'] ?></p>
+                        <h5 class="card-title"><?= htmlspecialchars($arr['heading']) ?></h5>
+                        <p class="card-text"><?= nl2br(htmlspecialchars($arr['text'])) ?></p>
                         <a href="browse_lots.php" class="btn btn-primary">Learn More</a>
                     </div>
                 </div>
@@ -81,21 +81,21 @@
                     <div class="feature-box text-center">
                         <i class="fas fa-heart"></i>
                         <h4>Compassionate Care</h4>
-                        <p>We provide caring and understanding service during difficult times.</p>
+                        <p><?= nl2br(htmlspecialchars("We provide caring and understanding service during difficult times.")) ?></p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="feature-box text-center">
                         <i class="fas fa-clock"></i>
                         <h4>24/7 Support</h4>
-                        <p>Available round the clock to assist you with your needs.</p>
+                        <p><?= nl2br(htmlspecialchars("Available round the clock to assist you with your needs.")) ?></p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="feature-box text-center">
                         <i class="fas fa-hand-holding-heart"></i>
                         <h4>Professional Service</h4>
-                        <p>Experienced staff dedicated to serving you with respect.</p>
+                        <p><?= nl2br(htmlspecialchars("Experienced staff dedicated to serving you with respect.")) ?></p>
                     </div>
                </div>
             </div>

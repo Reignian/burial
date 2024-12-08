@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Handle image upload
         if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-            $allowedTypes = ['image/jpeg', 'image/png'];
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
             if (in_array($_FILES['image']['type'], $allowedTypes)) {
                 $uploadDir = '../../assets/images/';
                 if (!file_exists($uploadDir)) {
@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Handle image upload if new image is selected
         if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-            $allowedTypes = ['image/jpeg', 'image/png'];
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
             if (in_array($_FILES['image']['type'], $allowedTypes)) {
                 $uploadDir = '../../assets/images/';
                 if (!file_exists($uploadDir)) {
@@ -96,6 +96,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+
+
+
+
+    if (isset($_POST['update_main'])) {
+        $text = htmlspecialchars($_POST['text']);
+        $image = null;
+        
+        // Handle image upload if new image is selected
+        if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+            if (in_array($_FILES['image']['type'], $allowedTypes)) {
+                $uploadDir = '../../assets/images/';
+                if (!file_exists($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                
+                $filename = uniqid() . '_' . basename($_FILES['image']['name']);
+                $targetPath = $uploadDir . $filename;
+                
+                if (move_uploaded_file($_FILES['image']['tmp_name'], $targetPath)) {
+                    $image = 'assets/images/' . $filename;
+                    
+                    // Delete old image if exists
+                    if (!empty($_POST['current_image'])) {
+                        $oldImagePath = __DIR__ . '/../../' . $_POST['current_image'];
+                        if (file_exists($oldImagePath)) {
+                            unlink($oldImagePath);
+                        }
+                    }
+                }
+            }
+        }
+
+        if ($websiteSettings->updateAboutMain($text, $image)) {
+            $message = 'Hero carousel item updated successfully!';
+            $type = 'success';
+        } else {
+            $message = 'Failed to update hero carousel item.';
+            $type = 'danger';
+        }
+    }
 
 
 
@@ -165,7 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $card_text1 = htmlspecialchars($_POST['card_text1']);
         $card_icon1 = htmlspecialchars($_POST['card_icon1']);
         
-        if ($websiteSettings->updateCard1($card_title1, $card_icon1, $card_text1)) {
+        if ($websiteSettings->updateCard1($card_title1, $card_text1, $card_icon1)) {
             $message = 'updated successfully!';
             $type = 'success';
         } else {
@@ -179,7 +221,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $card_text2 = htmlspecialchars($_POST['card_text2']);
         $card_icon2 = htmlspecialchars($_POST['card_icon2']);
         
-        if ($websiteSettings->updateCard2($card_title2, $card_icon2, $card_text2)) {
+        if ($websiteSettings->updateCard2($card_title2, $card_text2, $card_icon2)) {
             $message = 'updated successfully!';
             $type = 'success';
         } else {
@@ -193,7 +235,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $card_text3 = htmlspecialchars($_POST['card_text3']);
         $card_icon3 = htmlspecialchars($_POST['card_icon3']);
         
-        if ($websiteSettings->updateCard3($card_title3, $card_icon3, $card_text3)) {
+        if ($websiteSettings->updateCard3($card_title3, $card_text3, $card_icon3)) {
             $message = 'updated successfully!';
             $type = 'success';
         } else {
@@ -207,7 +249,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $card_text4 = htmlspecialchars($_POST['card_text4']);
         $card_icon4 = htmlspecialchars($_POST['card_icon4']);
         
-        if ($websiteSettings->updateCard4($card_title4, $card_icon4, $card_text4)) {
+        if ($websiteSettings->updateCard4($card_title4, $card_text4, $card_icon4)) {
             $message = 'updated successfully!';
             $type = 'success';
         } else {
@@ -221,7 +263,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $card_text5 = htmlspecialchars($_POST['card_text5']);
         $card_icon5 = htmlspecialchars($_POST['card_icon5']);
         
-        if ($websiteSettings->updateCard5($card_title5, $card_icon5, $card_text5)) {
+        if ($websiteSettings->updateCard5($card_title5, $card_text5, $card_icon5)) {
             $message = 'updated successfully!';
             $type = 'success';
         } else {
@@ -329,7 +371,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $image = '';
         if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
             if (in_array($_FILES['image']['type'], $allowedTypes)) {
                 $filename = uniqid() . '_' . basename($_FILES['image']['name']);
                 $targetPath = '../../assets/images/' . $filename;
@@ -357,7 +399,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $image = $current_image;
         if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
             if (in_array($_FILES['image']['type'], $allowedTypes)) {
                 $filename = uniqid() . '_' . basename($_FILES['image']['name']);
                 $targetPath = '../../assets/images/' . $filename;
