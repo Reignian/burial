@@ -1,45 +1,48 @@
 <?php
     include('includes/header.php');
+    require_once __DIR__ . '/website/website.class.php';
+
+    $burialObj = new CMS();
+    $array1 = $burialObj->Pubmat1();
+    $array2 = $burialObj->Pubmat2();
+    
 ?>
+
 <link rel="stylesheet" href="assets/landing.css">
 
 <div class="container-fluid px-0">
     <!-- Hero Section with Slideshow -->
     <section id="hero-slideshow" class="carousel slide" data-bs-ride="carousel">
-        <div class="carousel-indicators">
-            <button type="button" data-bs-target="#hero-slideshow" data-bs-slide-to="0" class="active"></button>
-            <button type="button" data-bs-target="#hero-slideshow" data-bs-slide-to="1"></button>
-            <button type="button" data-bs-target="#hero-slideshow" data-bs-slide-to="2"></button>
-        </div>
-        <div class="carousel-inner">
-            <div class="carousel-item active">
-                <img src="assets/images/slide1.jpg" class="d-block w-100" alt="Memorial Park">
+    <?php $first = true; ?>
+    
+    <div class="carousel-indicators">
+        <?php foreach ($array1 as $key => $arr): ?>
+            <button type="button" data-bs-target="#hero-slideshow" data-bs-slide-to="<?= $key ?>" 
+                <?= $first ? 'class="active"' : '' ?>></button>
+            <?php if ($first) $first = false; ?>
+        <?php endforeach; ?>
+    </div>
+
+    <div class="carousel-inner">
+        <?php $first = true; ?>
+        <?php foreach ($array1 as $arr): ?>
+            <div class="carousel-item <?= $first ? 'active' : '' ?>">
+                <img src="<?= $arr['image'] ?>" class="d-block w-100" alt="Sto. Nino Cemetery Pubmat">
                 <div class="carousel-caption">
-                    <h2>Welcome to Sto. Niño Parish Cemetery</h2>
-                    <p>A peaceful resting place for your loved ones</p>
+                    <h2><?= $arr['heading'] ?></h2>
+                    <p><?= $arr['text'] ?></p>
                 </div>
             </div>
-            <div class="carousel-item">
-                <img src="assets/images/slide2.jpg" class="d-block w-100" alt="Garden View">
-                <div class="carousel-caption">
-                    <h2>Serene Environment</h2>
-                    <p>Beautiful landscapes and peaceful surroundings</p>
-                </div>
-            </div>
-            <div class="carousel-item">
-                <img src="assets/images/slide3.jpg" class="d-block w-100" alt="Services">
-                <div class="carousel-caption">
-                    <h2>Professional Services</h2>
-                    <p>Dedicated to providing respectful memorial services</p>
-                </div>
-            </div>
-        </div>
-        <button class="carousel-control-prev" type="button" data-bs-target="#hero-slideshow" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon"></span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#hero-slideshow" data-bs-slide="next">
-            <span class="carousel-control-next-icon"></span>
-        </button>
+            <?php if ($first) $first = false; ?>
+        <?php endforeach; ?>
+    </div>
+
+    <button class="carousel-control-prev" type="button" data-bs-target="#hero-slideshow" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#hero-slideshow" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+    </button>
     </section>
 </div>
 
@@ -48,36 +51,22 @@
     <div class="container">
         <h2 class="text-center mb-5">Available Memorial Lots</h2>
         <div class="owl-carousel product-carousel">
+
+        <?php foreach ($array2 as $arr) { ?>
+
             <div class="item">
                 <div class="card">
-                    <img src="assets/images/slide2.jpg" class="card-img-top" alt="Lawn Lot">
+                    <img src="<?= $arr['image'] ?>" class="card-img-top" alt="Lawn Lot">
                     <div class="card-body">
-                        <h5 class="card-title">Lawn Lot</h5>
-                        <p class="card-text">Peaceful garden setting with well-maintained grounds.</p>
+                        <h5 class="card-title"><?= $arr['heading'] ?></h5>
+                        <p class="card-text"><?= $arr['text'] ?></p>
                         <a href="browse_lots.php" class="btn btn-primary">Learn More</a>
                     </div>
                 </div>
             </div>
-            <div class="item">
-                <div class="card">
-                    <img src="assets/images/slide2.jpg" class="card-img-top" alt="Garden Lot">
-                    <div class="card-body">
-                        <h5 class="card-title">Garden Lot</h5>
-                        <p class="card-text">Beautiful garden lots with scenic views.</p>
-                        <a href="browse_lots.php" class="btn btn-primary">Learn More</a>
-                    </div>
-                </div>
-            </div>
-            <div class="item">
-                <div class="card">
-                    <img src="assets/images/slide2.jpg" class="card-img-top" alt="Family Estate">
-                    <div class="card-body">
-                        <h5 class="card-title">Family Estate</h5>
-                        <p class="card-text">Spacious family estates for generations to come.</p>
-                        <a href="browse_lots.php" class="btn btn-primary">Learn More</a>
-                    </div>
-                </div>
-            </div>
+            
+        <?php } ?>
+
         </div>
     </div>
 </section>
@@ -108,14 +97,13 @@
                         <h4>Professional Service</h4>
                         <p>Experienced staff dedicated to serving you with respect.</p>
                     </div>
-                </div>
+               </div>
             </div>
         </div>
     </div>
 </section>
 
 <?php include('includes/footer.php'); ?>
-
 <!-- Required JS -->
 <script>
     $(document).ready(function(){

@@ -37,14 +37,14 @@
 }
 
 .btn-primary {
-    background-color: #007bff;
+    background-color: #006064;
     border: none;
     padding: 10px 25px;
     border-radius: 5px;
 }
 
 .btn-primary:hover {
-    background-color: #0056b3;
+    background-color: #006064;
 }
 
 #contact {
@@ -52,7 +52,7 @@
 }
 
 .contact-info i {
-    color: #007bff;
+    color: #006064;
     margin-right: 10px;
 }
 
