@@ -274,7 +274,7 @@
             </a>
         </li>
         <li><a href="generate_report.php"><i class="fas fa-file-lines icon"></i><span class="menu-text">Generate Report</span></a></li>
-        <li><a href="website_settings.php"><i class="fas fa-file-lines icon"></i><span class="menu-text">Website Settings</span></a></li>
+        <li><a href="website_settings.php"><i class="fas fa-gear icon"></i><span class="menu-text">Website Settings</span></a></li>
         <li><a href="../sign/logout.php"><i class="fas fa-sign-out-alt icon"></i><span class="menu-text">Logout</span></a></li>
     </ul>
 </div>
