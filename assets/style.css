@@ -1,0 +1,77 @@
+/* Custom CSS for Landing Page */
+.carousel-item {
+    height: 600px;
+}
+
+.carousel-item img {
+    object-fit: cover;
+    height: 100%;
+}
+
+.carousel-caption {
+    background: rgba(0,0,0,0.5);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.feature-box {
+    padding: 30px;
+    border-radius: 10px;
+    background: white;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.product-carousel .item {
+    padding: 15px;
+}
+
+.card {
+    transition: transform 0.3s;
+    border: none;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 5px;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+#contact {
+    background-color: #f8f9fa;
+}
+
+.contact-info i {
+    color: #007bff;
+    margin-right: 10px;
+}
+
+header {
+    position: relative;
+    z-index: 1000;
+}
+
+.dropdown-menu {
+    z-index: 1001;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .carousel-item {
+        height: 400px;
+    }
+    
+    .feature-box {
+        margin-bottom: 30px;
+    }
+}

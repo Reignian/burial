@@ -41,6 +41,46 @@ header #A{
     color: #e0f7fa;
 }
 
+#ferson {
+    padding: 0;
+    height: 4vw;
+    width: 4vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#ferson .bi-person-circle {
+    font-size: 2vw;
+    color: #e0f7fa;
+    transition: color 0.3s ease;
+}
+
+#ferson:hover .bi-person-circle {
+    color: #fff;
+}
+
+@media only screen and (max-width: 768px) {
+    #ferson {
+        height: 6vw;
+        width: 6vw;
+    }
+    
+    #ferson .bi-person-circle {
+        font-size: 4vw;
+    }
+}
+
+@media only screen and (min-width: 1400px) {
+    #ferson {
+        height: 3vw;
+        width: 3vw;
+    }
+    
+    #ferson .bi-person-circle {
+        font-size: 1.5vw;
+    }
+}
 
 .dropdown-toggle::after {
     display: inline-block;
@@ -74,9 +114,6 @@ header #A{
 
 }
 
-
-
-
 header ul{
     list-style: none;
     display: flex;
@@ -102,7 +139,6 @@ header .nav:hover{
     text-shadow: 0px 0px 10px white;
 }
 
-
 header h1 {
     font-family: 'Garamond', serif;
     font-size: 3rem;
@@ -116,31 +152,6 @@ section{
     width: 85%;
     font-family: verdana;
 }
-
-
-
-
-
-#home{
-    display: flex;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #lots{
     display: flex;
@@ -235,11 +246,6 @@ section{
     color:#006064;
     box-shadow: 1px 1px 3px #455a64;
 }
-
-
-
-
-
 
 /* Dropdown Menu */
 .dropdown {
@@ -425,6 +431,64 @@ footer a:hover {
     color: #80deea;
 }
 
+/* Contact Footer */
+.contact-footer {
+    background-color: #006064;
+    color: #e0f7fa;
+    padding: 2vw 0;
+    width: 100%;
+    border-top: 5px solid #004d40;
+    box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.contact-footer .section-title {
+    color: #e0f7fa;
+    font-size: 2vw;
+    font-weight: 600;
+    margin-bottom: 2vw;
+}
+
+.contact-footer .contact-info {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    gap: 4vw;
+}
+
+.contact-footer .contact-info li {
+    font-size: 1.2vw;
+    display: flex;
+    align-items: center;
+    gap: 0.5vw;
+}
+
+.contact-footer .contact-info i {
+    font-size: 1.4vw;
+    color: #b2ebf2;
+}
+
+@media only screen and (max-width: 768px) {
+    .contact-footer .section-title {
+        font-size: 4vw;
+    }
+
+    .contact-footer .contact-info {
+        flex-direction: column;
+        align-items: center;
+        gap: 2vw;
+    }
+
+    .contact-footer .contact-info li {
+        font-size: 3vw;
+    }
+
+    .contact-footer .contact-info i {
+        font-size: 3.2vw;
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     header h1 {
@@ -461,5 +525,134 @@ footer a:hover {
     .cta .button {
         margin: 10px 0;
         display: block;
+    }
+}
+
+/* About Page Styles */
+.about-hero {
+    background: linear-gradient(rgba(0, 96, 100, 0.8), rgba(0, 96, 100, 0.8)), url('assets/images/cemetery-hero.jpg');
+    background-size: cover;
+    background-position: center;
+    color: #e0f7fa;
+    padding: 6vw 0;
+    text-align: center;
+    margin-bottom: 4vw;
+}
+
+.about-hero h1 {
+    font-size: 3.5vw;
+    font-weight: 600;
+    margin-bottom: 1vw;
+}
+
+.about-hero .lead {
+    font-size: 1.8vw;
+    font-weight: 300;
+}
+
+.value-card, .service-card {
+    background: white;
+    padding: 2vw;
+    border-radius: 10px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    height: 100%;
+    transition: transform 0.3s ease;
+}
+
+.value-card:hover, .service-card:hover {
+    transform: translateY(-5px);
+}
+
+.value-card i {
+    color: #006064;
+    font-size: 2.5vw;
+    margin-bottom: 1vw;
+}
+
+.value-card h3, .service-card h3 {
+    color: #006064;
+    font-size: 1.5vw;
+    margin-bottom: 1vw;
+}
+
+.value-card p, .service-card li {
+    color: #455a64;
+    font-size: 1vw;
+}
+
+.service-card ul {
+    list-style: none;
+    padding: 0;
+}
+
+.service-card li {
+    margin-bottom: 0.8vw;
+    padding-left: 1.5vw;
+    position: relative;
+}
+
+.service-card li:before {
+    content: "•";
+    color: #006064;
+    position: absolute;
+    left: 0;
+}
+
+.team-card {
+    text-align: center;
+    margin-bottom: 2vw;
+}
+
+.team-card img {
+    width: 15vw;
+    height: 15vw;
+    object-fit: cover;
+    margin-bottom: 1vw;
+    border: 5px solid #006064;
+}
+
+.team-card h3 {
+    color: #006064;
+    font-size: 1.3vw;
+    margin-bottom: 0.5vw;
+}
+
+.team-card p {
+    color: #455a64;
+    font-size: 1vw;
+}
+
+@media only screen and (max-width: 768px) {
+    .about-hero h1 {
+        font-size: 6vw;
+    }
+
+    .about-hero .lead {
+        font-size: 3.5vw;
+    }
+
+    .value-card i {
+        font-size: 5vw;
+    }
+
+    .value-card h3, .service-card h3 {
+        font-size: 4vw;
+    }
+
+    .value-card p, .service-card li {
+        font-size: 3vw;
+    }
+
+    .team-card img {
+        width: 30vw;
+        height: 30vw;
+    }
+
+    .team-card h3 {
+        font-size: 3.5vw;
+    }
+
+    .team-card p {
+        font-size: 3vw;
     }
 }
