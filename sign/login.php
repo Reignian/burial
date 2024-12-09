@@ -13,7 +13,15 @@
         $username = clean_input($_POST['username']);
         $password = clean_input($_POST['password']);
 
-        if ($accountObj->login($username, $password)) {
+        if (empty($username) && empty($password)) {
+            $loginErr = 'Username and password is required';
+        } elseif (empty($username)) {
+            $loginErr = 'Username is required';
+        } elseif (empty($password)) {
+            $loginErr = 'Password is required';
+        }
+
+        elseif ($accountObj->login($username, $password)) {
             $data = $accountObj->fetch($username);
             
             // Check if the account is banned
@@ -46,7 +54,6 @@
         }
     }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -166,46 +173,47 @@
 
         .error {
             color: #d32f2f;
-            margin-top: 15px;
             text-align: center;
             font-size: 14px;
+            margin-top: 15px;
         }
 
         .signup-link {
             display: block;
-            text-align: center;
+            text-align: start;
             margin-top: 20px;
             color: var(--accent);
             text-decoration: none;
-            font-weight: 400;
             transition: color 0.3s ease;
+            font-size: 14px;
         }
 
         .signup-link:hover {
-            color: var(--primary-dark);
+            color: var(--secondary);
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <form action="" method="post">
-            <h2>LOGIN</h2>
+        <form method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+            <h2>Login</h2>
             <div class="input-group">
-                <input type="text" name="username" id="username" value="<?=$username?>" required placeholder=" ">
+                <input type="text" id="username" name="username" value="<?php echo $username; ?>" placeholder=" ">
                 <label for="username">Username</label>
             </div>
             <div class="input-group">
-                <input type="password" name="password" id="password" value="<?=$password?>" required placeholder=" ">
+                <input type="password" id="password" name="password" value="<?php echo $password; ?>" placeholder=" ">
                 <label for="password">Password</label>
+                <?php if (!empty($loginErr)): ?>
+                <div class="error"><?php echo $loginErr; ?></div>
+            <?php endif; ?>
+            <a href="forgot_password.php" class="signup-link" style="text-align: end;">Forgot Password?</a>
+
             </div>
             <input type="submit" value="Log In" name="login">
-            <?php
-            if (!empty($loginErr)){
-                echo "<p class='error'>$loginErr</p>";
-            }
-            ?>
+            <a href="signup.php" class="signup-link">Doesn't have an account? Sign Up</a>
         </form>
-        <a href="signup.php" class="signup-link">Don't have an account? Sign up</a>
     </div>
 </body>
 </html>

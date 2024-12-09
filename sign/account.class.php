@@ -2,6 +2,8 @@
 
 require_once __DIR__ . '/../database.php';
 
+date_default_timezone_set('Asia/Singapore');
+
 class Account{
     public $account_id = '';
     public $first_name = '';
@@ -13,7 +15,6 @@ class Account{
     public $phone_number = '';
     public $is_customer = 1;
     public $is_admin = 0;
-
 
     protected $db;
 
@@ -148,6 +149,64 @@ class Account{
             }
         }
         return false;
+    }
+
+    // Save reset token in database
+    public function saveResetToken($email, $token, $expiry) {
+        try {
+            $sql = "UPDATE account SET reset_token = ?, reset_token_expiry = ? WHERE email = ?";
+            $stmt = $this->db->connect()->prepare($sql);
+            return $stmt->execute([$token, $expiry, $email]);
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
+
+    // Validate reset token
+    public function validateResetToken($token) {
+        try {
+            $sql = "SELECT reset_token_expiry FROM account WHERE reset_token = ? AND reset_token_expiry > NOW()";
+            $stmt = $this->db->connect()->prepare($sql);
+            $stmt->execute([$token]);
+            return $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
+
+    // Reset password
+    public function resetPassword($token, $newPassword) {
+        try {
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+            $sql = "UPDATE account SET password = ?, reset_token = NULL, reset_token_expiry = NULL WHERE reset_token = ?";
+            $stmt = $this->db->connect()->prepare($sql);
+            return $stmt->execute([$hashedPassword, $token]);
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
+
+    // Invalidate reset token
+    public function invalidateResetToken($token) {
+        try {
+            $sql = "UPDATE account SET reset_token = NULL, reset_token_expiry = NULL WHERE reset_token = ?";
+            $stmt = $this->db->connect()->prepare($sql);
+            return $stmt->execute([$token]);
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
+
+    // Check if email exists
+    public function emailExists($email) {
+        try {
+            $sql = "SELECT email FROM account WHERE email = ?";
+            $stmt = $this->db->connect()->prepare($sql);
+            $stmt->execute([$email]);
+            return $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            return false;
+        }
     }
 }
 
