@@ -14,9 +14,19 @@
     $contact = $websiteSettings->getContact();
 ?>
 
+<style>
+    .display-5 {
+    font-size: 2.5rem !important;
+    margin-bottom: 0.5rem !important;
+    letter-spacing: 1px !important;
+    color: #00838f !important;
+}
+</style>
+
 <div class="container-fluid px-4 py-4">
     <div class="text-center mb-4">
         <h1 class="display-5 fw-bold text-uppercase" style="color: #006064;">Website Settings</h1>
+
         <div class="border-bottom border-2 w-25 mx-auto" style="border-color: #006064 !important;"></div>
     </div>
 

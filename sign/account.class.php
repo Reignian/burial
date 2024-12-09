@@ -1,6 +1,6 @@
 <?php
 
-require_once '../database.php';
+require_once __DIR__ . '/../database.php';
 
 class Account{
     public $account_id = '';
@@ -21,7 +21,7 @@ class Account{
         $this->db = new Database();
     }
 
-    function add(){
+    function add (){
 
         $sql = "INSERT INTO account (first_name, middle_name, last_name, username, password, email, phone_number, is_customer, is_admin) VALUES (:first_name, :middle_name, :last_name, :username, :password, :email, :phone_number, :is_customer, :is_admin);";
         $query = $this->db->connect()->prepare($sql);
@@ -95,6 +95,60 @@ class Account{
         return $query->fetchColumn();
     }
 
+    function update($account_id) {
+        $sql = "UPDATE account SET first_name = :first_name, middle_name = :middle_name, last_name = :last_name, 
+                username = :username, email = :email, phone_number = :phone_number 
+                WHERE account_id = :account_id";
+        
+        $query = $this->db->connect()->prepare($sql);
+        
+        $query->bindParam(':first_name', $this->first_name);
+        $query->bindParam(':middle_name', $this->middle_name);
+        $query->bindParam(':last_name', $this->last_name);
+        $query->bindParam(':username', $this->username);
+        $query->bindParam(':email', $this->email);
+        $query->bindParam(':phone_number', $this->phone_number);
+        $query->bindParam(':account_id', $account_id);
+        
+        return $query->execute();
+    }
+
+    function changePassword($account_id, $current_password, $new_password) {
+        // First verify the current password
+        $sql = "SELECT password FROM account WHERE account_id = :account_id";
+        $query = $this->db->connect()->prepare($sql);
+        $query->bindParam(':account_id', $account_id);
+        
+        if ($query->execute()) {
+            $data = $query->fetch();
+            if ($data && password_verify($current_password, $data['password'])) {
+                // Current password is correct, update to new password
+                $sql = "UPDATE account SET password = :password WHERE account_id = :account_id";
+                $query = $this->db->connect()->prepare($sql);
+                
+                $hashpassword = password_hash($new_password, PASSWORD_DEFAULT);
+                $query->bindParam(':password', $hashpassword);
+                $query->bindParam(':account_id', $account_id);
+                
+                return $query->execute();
+            }
+        }
+        return false;
+    }
+
+    function verifyPassword($account_id, $password) {
+        $sql = "SELECT password FROM account WHERE account_id = :account_id";
+        $query = $this->db->connect()->prepare($sql);
+        $query->bindParam(':account_id', $account_id);
+        
+        if ($query->execute()) {
+            $data = $query->fetch();
+            if ($data && password_verify($password, $data['password'])) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 // $obj = new Account();

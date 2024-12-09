@@ -164,6 +164,9 @@ class Reservation{
         return $query->fetchAll(PDO::FETCH_ASSOC);
     }
 
+
+    
+
     function getPayments($reservation_id) {
         $sql = "SELECT p.*
                 FROM payment p
