@@ -33,14 +33,14 @@
     </ul>
 
     <div class="btn-group" style="z-index: 9999;">
-        <button type="button" id="ferson" class="btn dropdown-toggle" data-bs-toggle="dropdown">
-            <i class="bi bi-person-circle"></i>
-        </button>
+            <button type="button" id="ferson" class="btn dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-person-circle"></i>
+            </button>
 
-        <div class="dropdown-menu dropdown-menu-end" style="z-index: 10000;">
-            <a href="account_profile.php" class="dropdown-item">Account</a>
-            <a href="account_notification.php" class="dropdown-item">Notifications</a>
-            <a href="./sign/logout.php" class="dropdown-item">Logout</a>
+            <div class="dropdown-menu dropdown-menu-end" style="z-index: 10000;">
+                <a href="account_profile.php" class="dropdown-item">Account</a>
+                <a href="account_notification.php" class="dropdown-item">Notifications</a>
+                <a href="./sign/logout.php" class="dropdown-item">Logout</a>
+            </div>
         </div>
-    </div>
 </header>

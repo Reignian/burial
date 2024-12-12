@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../database.php';
+require_once __DIR__ . '/lots.class.php';
 
 class Notification {
     protected $db;
@@ -89,15 +90,17 @@ class Notification {
         // Set timezone to your local timezone
         date_default_timezone_set('Asia/Manila');
 
+        $reservationObj = new Reservation();
+
         $sql = "SELECT 
                     r.reservation_id, r.account_id, r.monthly_payment, r.balance,
-                    r.reservation_date,
+                    r.reservation_date, r.payment_plan_id,
                     COUNT(p.payment_id) AS payment_count
                 FROM reservation r
                 LEFT JOIN payment p ON r.reservation_id = p.reservation_id
                 WHERE r.request = 'Confirmed' 
                 AND r.balance > 0
-                GROUP BY r.reservation_id, r.account_id, r.monthly_payment, r.balance, r.reservation_date";
+                GROUP BY r.reservation_id, r.account_id, r.monthly_payment, r.balance, r.reservation_date, r.payment_plan_id";
 
         $query = $this->db->connect()->prepare($sql);
         $query->execute();
@@ -113,6 +116,37 @@ class Notification {
             $next_payment_date = clone $reservation_date;
             $next_payment_date->modify("+{$payment_count} month");
             $next_payment_date->setTime(0, 0, 0);
+
+            // For missed payments, check and apply penalty
+            if ($next_payment_date < $today) {
+                // Calculate penalty using the public method
+                $days_late = $today->diff($next_payment_date)->days;
+                $penalty_amount = $reservationObj->calculatePenalty(
+                    $payment['reservation_id'], 
+                    $payment['monthly_payment'],
+                    $days_late
+                );
+                
+                if ($penalty_amount > 0) {
+                    // Try to apply the penalty
+                    $penalty_applied = $reservationObj->applyPenaltyAndUpdateBalance(
+                        $payment['reservation_id'], 
+                        $penalty_amount, 
+                        $next_payment_date
+                    );
+                    
+                    if ($penalty_applied) {
+                        // Create penalty notification
+                        $this->createNotification(
+                            $payment['account_id'],
+                            'payment_missed',
+                            'Late Payment Penalty Applied',
+                            "A penalty of ₱" . number_format($penalty_amount, 2) . " has been applied to your balance due to late payment.",
+                            $payment['reservation_id']
+                        );
+                    }
+                }
+            }
 
             // Get the current month and year
             $currentMonth = $today->format('Y-m');
@@ -171,7 +205,7 @@ class Notification {
                     }
                 }
             }
-            // For missed payments
+            // For missed payments notification
             elseif ($next_payment_date < $today) {
                 // Check if we already sent a missed payment notification for this month
                 $sql = "SELECT COUNT(*) FROM notifications 

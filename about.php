@@ -104,7 +104,8 @@
         </div>
     </div>
 </div>
-
+<!-- Add SSE for payment checks -->
+<script src="website/js/check-payments.js"></script>
 <?php include('includes/footer.php'); ?>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>

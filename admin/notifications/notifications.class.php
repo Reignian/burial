@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../database.php';
+require_once __DIR__ . '/../../website/notification.class.php';
 
 class Notifications_class{
 
@@ -101,6 +102,11 @@ class Notifications_class{
     }
 
     function cancel_reservation($reservation_id) {
+        $reservation = $this->fetchReservationRecord($reservation_id);
+        if (!$reservation) {
+            return false;
+        }
+
         $sql = "UPDATE lots l
                 JOIN reservation r ON l.lot_id = r.lot_id
                 SET l.status = 'Available'
@@ -114,16 +120,27 @@ class Notifications_class{
             $queryupdate = $this->db->connect()->prepare($sqlupdate);
             $queryupdate->bindParam(':reservation_id', $reservation_id);
     
-            $queryupdate->execute();
-        
-            return true;
-        } else {
-            return false;
+            if ($queryupdate->execute()) {
+                // Create notification for cancelled reservation
+                $notificationObj = new Notification();
+                $lotName = $this->account_lot($reservation_id);
+                $title = "Reservation Cancelled";
+                $message = "Your reservation for lot " . $lotName . " has been cancelled.";
+                $notificationObj->createNotification($reservation['account_id'], 'reservation_status', $title, $message, $reservation_id);
+                
+                return true;
+            }
         }
+        return false;
     }
     
     
     function confirm_reservation($reservation_id) {
+        $reservation = $this->fetchReservationRecord($reservation_id);
+        if (!$reservation) {
+            return false;
+        }
+
         $sql = "UPDATE lots l
                 JOIN reservation r ON l.lot_id = r.lot_id
                 SET l.status = 'Reserved'
@@ -137,12 +154,18 @@ class Notifications_class{
             $queryupdate = $this->db->connect()->prepare($sqlupdate);
             $queryupdate->bindParam(':reservation_id', $reservation_id);
     
-            $queryupdate->execute();
-        
-            return true;
-        } else {
-            return false;
+            if ($queryupdate->execute()) {
+                // Create notification for confirmed reservation
+                $notificationObj = new Notification();
+                $lotName = $this->account_lot($reservation_id);
+                $title = "Reservation Confirmed";
+                $message = "Your reservation for lot " . $lotName . " has been confirmed.";
+                $notificationObj->createNotification($reservation['account_id'], 'reservation_status', $title, $message, $reservation_id);
+                
+                return true;
+            }
         }
+        return false;
     }
 
     function getPendingNotificationsCount() {

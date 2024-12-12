@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../database.php';
+require_once __DIR__ . '/../../website/notification.class.php';
 
 class Reservation_class{
 
@@ -49,7 +50,7 @@ class Reservation_class{
 
         try {
             // Check if the reservation exists and get its details
-            $sqlCheckReservation = "SELECT r.reservation_id, r.reservation_date, r.balance, l.lot_id 
+            $sqlCheckReservation = "SELECT r.reservation_id, r.reservation_date, r.balance, r.account_id, l.lot_id 
                                     FROM reservation r
                                     JOIN lots l ON r.lot_id = l.lot_id
                                     WHERE r.reservation_id = :reservation_id";
@@ -79,6 +80,13 @@ class Reservation_class{
             $queryUpdateLot = $this->db->connect()->prepare($sqlUpdateLot);
             $queryUpdateLot->bindParam(':lot_id', $reservationDetails['lot_id']);
             $queryUpdateLot->execute();
+
+            // Create notification for cancelled reservation
+            $notificationObj = new Notification();
+            $lotName = $this->account_lot($reservationID);
+            $title = "Reservation Cancelled";
+            $message = "Your reservation for lot " . $lotName . " has been cancelled.";
+            $notificationObj->createNotification($reservationDetails['account_id'], 'reservation_status', $title, $message, $reservationID);
 
             $this->db->connect()->commit();
 
@@ -163,50 +171,66 @@ class Reservation_class{
     }
 
     function applyPenaltyAndUpdateBalance($reservation_id, $penalty_amount, $due_date) {
+        // Ensure $due_date is a DateTime object
+        if (!($due_date instanceof DateTime)) {
+            $due_date = new DateTime($due_date);
+        }
+
         // Start a transaction
-        $this->db->connect()->beginTransaction();
+        $conn = $this->db->connect();
+        $conn->beginTransaction();
 
         try {
             // Format the due date
-            $formatted_due_date = $due_date->format('Y-m-d');
+            $formatted_due_date = $due_date->format('Y-m-d H:i:s');
+            $formatted_date_only = $due_date->format('Y-m-d');
 
             // Check if a penalty has already been applied for this month
             $sqlCheckPenalty = "SELECT COUNT(*) FROM penalty_log 
                                 WHERE reservation_id = :reservation_id 
-                                AND YEAR(penalty_date) = YEAR(:due_date) 
-                                AND MONTH(penalty_date) = MONTH(:due_date)";
-            $queryCheckPenalty = $this->db->connect()->prepare($sqlCheckPenalty);
+                                AND DATE(penalty_date) = :check_date";
+            $queryCheckPenalty = $conn->prepare($sqlCheckPenalty);
             $queryCheckPenalty->bindParam(':reservation_id', $reservation_id);
-            $queryCheckPenalty->bindParam(':due_date', $formatted_due_date);
-            $queryCheckPenalty->execute();
+            $queryCheckPenalty->bindParam(':check_date', $formatted_date_only);
+            
+            if (!$queryCheckPenalty->execute()) {
+                throw new Exception("Failed to check existing penalty");
+            }
+            
             $penaltyExists = $queryCheckPenalty->fetchColumn();
 
             if ($penaltyExists == 0) {
                 // Add the penalty to the balance
                 $sqlUpdateBalance = "UPDATE reservation SET balance = balance + :penalty_amount WHERE reservation_id = :reservation_id";
-                $queryUpdateBalance = $this->db->connect()->prepare($sqlUpdateBalance);
+                $queryUpdateBalance = $conn->prepare($sqlUpdateBalance);
                 $queryUpdateBalance->bindParam(':penalty_amount', $penalty_amount);
                 $queryUpdateBalance->bindParam(':reservation_id', $reservation_id);
-                $queryUpdateBalance->execute();
+                
+                if (!$queryUpdateBalance->execute()) {
+                    throw new Exception("Failed to update balance");
+                }
 
                 // Log the penalty
-                $sqlLogPenalty = "INSERT INTO penalty_log (reservation_id, penalty_amount, penalty_date) VALUES (:reservation_id, :penalty_amount, :due_date)";
-                $queryLogPenalty = $this->db->connect()->prepare($sqlLogPenalty);
+                $sqlLogPenalty = "INSERT INTO penalty_log (reservation_id, penalty_amount, penalty_date) VALUES (:reservation_id, :penalty_amount, :penalty_date)";
+                $queryLogPenalty = $conn->prepare($sqlLogPenalty);
                 $queryLogPenalty->bindParam(':reservation_id', $reservation_id);
                 $queryLogPenalty->bindParam(':penalty_amount', $penalty_amount);
-                $queryLogPenalty->bindParam(':due_date', $formatted_due_date);
-                $queryLogPenalty->execute();
+                $queryLogPenalty->bindParam(':penalty_date', $formatted_due_date);
+                
+                if (!$queryLogPenalty->execute()) {
+                    throw new Exception("Failed to log penalty");
+                }
 
                 // Commit the transaction
-                $this->db->connect()->commit();
+                $conn->commit();
                 return true;
             } else {
                 // Penalty already applied this month
-                $this->db->connect()->rollBack();
+                $conn->rollBack();
                 return false;
             }
         } catch (Exception $e) {
-            $this->db->connect()->rollBack();
+            $conn->rollBack();
             return false;
         }
     }

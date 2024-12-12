@@ -103,6 +103,8 @@
     </div>
 </section>
 
+<!-- Add SSE for payment checks -->
+<script src="website/js/check-payments.js"></script>
 <?php include('includes/footer.php'); ?>
 <!-- Required JS -->
 <script>
