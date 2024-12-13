@@ -310,18 +310,70 @@ class Reservation_class{
         return ""; // Default for no color change
     }
 
-    function addPayment($reservation_id, $amount_paid) {
-        $sql = "INSERT INTO payment (reservation_id, amount_paid) VALUES (:reservation_id, :amount_paid)";
+    private function createPaymentSuccessNotification($account_id, $reservation_id, $amount_paid) {
+        // Check if we already sent a notification for this payment today
+        $sql = "SELECT COUNT(*) FROM notifications 
+                WHERE account_id = :account_id 
+                AND reference_id = :reservation_id 
+                AND type = 'payment_success'
+                AND DATE(created_at) = CURRENT_DATE()";
+        
         $query = $this->db->connect()->prepare($sql);
+        $query->bindParam(':account_id', $account_id);
         $query->bindParam(':reservation_id', $reservation_id);
-        $query->bindParam(':amount_paid', $amount_paid);
-    
-        if ($query->execute()) {
-            return true;
-        } else {
+        $query->execute();
+        
+        if ($query->fetchColumn() == 0) {
+            $sql = "INSERT INTO notifications (account_id, type, title, message, reference_id) 
+                    VALUES (:account_id, :type, :title, :message, :reference_id)";
+            
+            $type = 'payment_success';
+            $title = 'Payment Successful';
+            $message = "Your payment of ₱" . number_format($amount_paid, 2) . " was successfully processed. Thank you!";
+            
+            $query = $this->db->connect()->prepare($sql);
+            $query->bindParam(':account_id', $account_id);
+            $query->bindParam(':type', $type);
+            $query->bindParam(':title', $title);
+            $query->bindParam(':message', $message);
+            $query->bindParam(':reference_id', $reservation_id);
+            
+            return $query->execute();
+        }
+        return true;
+    }
+
+    function addPayment($reservation_id, $amount_paid) {
+        // Start transaction
+        $this->db->connect()->beginTransaction();
+
+        try {
+            // Get account_id for the reservation
+            $sql = "SELECT account_id FROM reservation WHERE reservation_id = :reservation_id";
+            $query = $this->db->connect()->prepare($sql);
+            $query->bindParam(':reservation_id', $reservation_id);
+            $query->execute();
+            $account_id = $query->fetchColumn();
+
+            // Insert payment
+            $sql = "INSERT INTO payment (reservation_id, amount_paid) VALUES (:reservation_id, :amount_paid)";
+            $query = $this->db->connect()->prepare($sql);
+            $query->bindParam(':reservation_id', $reservation_id);
+            $query->bindParam(':amount_paid', $amount_paid);
+            
+            if ($query->execute()) {
+                // Create notification
+                $this->createPaymentSuccessNotification($account_id, $reservation_id, $amount_paid);
+
+                $this->db->connect()->commit();
+                return true;
+            } else {
+                $this->db->connect()->rollBack();
+                return false;
+            }
+        } catch (Exception $e) {
+            $this->db->connect()->rollBack();
             return false;
         }
     }
-
-
 }

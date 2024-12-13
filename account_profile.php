@@ -69,14 +69,11 @@
 
     <div>
         <!-- Header -->
-        <div class="custom-bg p-3 d-flex justify-content-between align-items-center">
-        <h1><?= $_SESSION['account']['first_name'], ' ', $_SESSION['account']['middle_name'], ' ', $_SESSION['account']['last_name']?></h1>
+        <div class="custom-bg p-3 d-flex align-items-center">
+            <h1><?= $_SESSION['account']['first_name'], ' ', $_SESSION['account']['middle_name'], ' ', $_SESSION['account']['last_name']?></h1>
             <div>
-                <a href=""> 
-                    <i class="bi bi-bell me-2" style="color: #e0f2f1" ></i>
-                </a>
-                <a href="#" data-bs-toggle="modal" data-bs-target="#editAccountModal" style="color: #e0f2f1">
-                    <i class="bi bi-gear"></i>
+                <a href="#" data-bs-toggle="modal" data-bs-target="#editAccountModal" style="color: #e0f2f1; margin-left: 10px;">
+                    <i class="bi bi-pencil"></i>
                 </a>
             </div>
         </div>
@@ -195,7 +192,6 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="submit" class="btn btn-primary" style="background-color: #006064;">Save changes</button>
                 </div>
             </form>

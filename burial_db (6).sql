@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 08, 2024 at 08:11 PM
+-- Generation Time: Dec 09, 2024 at 10:16 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -126,16 +126,18 @@ CREATE TABLE `account` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `is_customer` tinyint(1) NOT NULL DEFAULT 1,
   `is_admin` tinyint(1) NOT NULL DEFAULT 0,
-  `is_banned` tinyint(1) DEFAULT 0
+  `is_banned` tinyint(1) DEFAULT 0,
+  `reset_token` varchar(64) DEFAULT NULL,
+  `reset_token_expiry` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `account`
 --
 
-INSERT INTO `account` (`account_id`, `username`, `password`, `first_name`, `middle_name`, `last_name`, `email`, `phone_number`, `created_at`, `is_customer`, `is_admin`, `is_banned`) VALUES
-(8, 'admin', '$2y$10$N0qDeYTcgKNeSHCIqFb/cupIQPBV5g2SNtDVb7FlT1EfqVNYdk6C2', 'admin', '', 'admin', 'admin@gmail.com', '09991234567', '2024-10-12 14:11:57', 1, 1, 0),
-(9, 'reign', '$2y$10$cliEw.S4Tq7vLAU0n/TjhusXoNyW6ZLVNe//K7wWK53jWYTLKqqv6', 'Reign Ian', 'Carreon', 'Magno', 'reign@gmail.com', '09123456789', '2024-10-12 14:16:13', 1, 0, 0);
+INSERT INTO `account` (`account_id`, `username`, `password`, `first_name`, `middle_name`, `last_name`, `email`, `phone_number`, `created_at`, `is_customer`, `is_admin`, `is_banned`, `reset_token`, `reset_token_expiry`) VALUES
+(8, 'admin', '$2y$10$N0qDeYTcgKNeSHCIqFb/cupIQPBV5g2SNtDVb7FlT1EfqVNYdk6C2', 'admin', '', 'admin', 'admin@gmail.com', '09991234567', '2024-10-12 14:11:57', 1, 1, 0, NULL, NULL),
+(9, 'reign', '$2y$10$cliEw.S4Tq7vLAU0n/TjhusXoNyW6ZLVNe//K7wWK53jWYTLKqqv6', 'Reign Ian', 'Carreon', 'Magno', 'reign@gmail.com', '09123456789', '2024-10-12 14:16:13', 1, 0, 0, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -173,26 +175,6 @@ CREATE TABLE `lots` (
   `status` enum('Available','On Request','Reserved') NOT NULL DEFAULT 'Available',
   `description` varchar(1000) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `notifications`
---
-
-CREATE TABLE `notifications` (
-  `notification_id` int(11) NOT NULL AUTO_INCREMENT,
-  `account_id` int(11) NOT NULL,
-  `type` enum('reservation_status','payment_success','payment_due') NOT NULL,
-  `title` varchar(255) NOT NULL,
-  `message` text NOT NULL,
-  `reference_id` int(11) DEFAULT NULL,
-  `is_read` tinyint(1) NOT NULL DEFAULT 0,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`notification_id`),
-  KEY `account_id` (`account_id`),
-  CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`account_id`) REFERENCES `account` (`account_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -358,13 +340,6 @@ ALTER TABLE `lots`
   ADD PRIMARY KEY (`lot_id`);
 
 --
--- Indexes for table `notifications`
---
-ALTER TABLE `notifications`
-  ADD PRIMARY KEY (`notification_id`),
-  ADD KEY `account_id` (`account_id`);
-
---
 -- Indexes for table `payment`
 --
 ALTER TABLE `payment`
@@ -452,12 +427,6 @@ ALTER TABLE `lots`
   MODIFY `lot_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
--- AUTO_INCREMENT for table `notifications`
---
-ALTER TABLE `notifications`
-  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT;
-
---
 -- AUTO_INCREMENT for table `payment`
 --
 ALTER TABLE `payment`
@@ -498,12 +467,6 @@ ALTER TABLE `reservation`
 --
 
 --
--- Constraints for table `notifications`
---
-ALTER TABLE `notifications`
-  ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`account_id`) REFERENCES `account` (`account_id`) ON DELETE CASCADE;
-
---
 -- Constraints for table `payment`
 --
 ALTER TABLE `payment`
@@ -522,6 +485,31 @@ ALTER TABLE `reservation`
   ADD CONSTRAINT `fk_account_id` FOREIGN KEY (`account_id`) REFERENCES `account` (`account_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   ADD CONSTRAINT `fk_lot_id` FOREIGN KEY (`lot_id`) REFERENCES `lots` (`lot_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   ADD CONSTRAINT `fk_payment_plan_id` FOREIGN KEY (`payment_plan_id`) REFERENCES `payment_plan` (`payment_plan_id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+--
+-- Table structure for table `notifications`
+--
+
+CREATE TABLE `notifications` (
+  `notification_id` int(11) NOT NULL AUTO_INCREMENT,
+  `account_id` int(11) NOT NULL,
+  `type` enum('reservation_status','payment_success','payment_due_today','payment_due_tomorrow','payment_missed') NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `message` text NOT NULL,
+  `reference_id` int(11) DEFAULT NULL,
+  `is_read` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`notification_id`),
+  KEY `account_id` (`account_id`),
+  CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`account_id`) REFERENCES `account` (`account_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Constraints for table `notifications`
+--
+ALTER TABLE `notifications`
+  ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`account_id`) REFERENCES `account` (`account_id`) ON DELETE CASCADE;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
