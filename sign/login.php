@@ -31,7 +31,7 @@
                 $_SESSION['account'] = $data;
 
                 // Redirect based on account type
-                if ($_SESSION['account']['is_admin']) {
+                if ($_SESSION['account']['is_admin'] || $_SESSION['account']['is_staff']) {
                     header('location: ../admin/dashboard.php');
                 } elseif ($_SESSION['account']['is_customer']) {
                     // Use the return_to URL for customers
@@ -49,7 +49,7 @@
             if ($_SESSION['account']['is_customer']) {
                 header('location: ../index.php');
                 exit();
-            } elseif ($_SESSION['account']['is_admin']) {
+            } elseif ($_SESSION['account']['is_admin'] || $_SESSION['account']['is_staff']) {
                 header('location: ../admin/dashboard.php');
                 exit();
             }

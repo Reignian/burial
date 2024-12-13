@@ -4,7 +4,7 @@
   require_once __DIR__ . '/../notifications/notifications.class.php';
 
     if(isset($_SESSION['account'])){
-        if(!$_SESSION['account']['is_admin']){
+        if(!($_SESSION['account']['is_admin'] || $_SESSION['account']['is_staff'])){
             header('location: ../sign/login.php');
         }
     }else{
@@ -238,7 +238,7 @@
 
 <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
-        <h3>Admin</h3>
+        <h3><?= $_SESSION['account']['first_name'], ' ', $_SESSION['account']['middle_name'], ' ', $_SESSION['account']['last_name']?></h3>
     </div>
     <ul class="sidebar-menu">
         <li><a href="dashboard.php" id="dashboard-link" class="nav-link"><i class="fas fa-tachometer-alt icon"></i><span class="menu-text">Dashboard</span></a></li>
@@ -274,6 +274,9 @@
         </li>
         <li><a href="generate_report.php"><i class="fas fa-file-lines icon"></i><span class="menu-text">Generate Report</span></a></li>
         <li><a href="website_settings.php"><i class="fas fa-gear icon"></i><span class="menu-text">Website Settings</span></a></li>
+        
+        
+        <?php if($_SESSION['account']['is_admin']): ?>
         <li class="nav-item payments-menu">
             <a href="staff.php" class="nav-link">
                 <i class="fas fa-user-tie icon"></i>
@@ -288,6 +291,9 @@
                 </li>
             </ul>
         </li>
+        <?php endif; ?>
+
+
         <li><a href="../sign/logout.php"><i class="fas fa-sign-out-alt icon"></i><span class="menu-text">Logout</span></a></li>
     </ul>
 </div>
