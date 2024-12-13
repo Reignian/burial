@@ -14,7 +14,6 @@
     $notifObj = new Notifications_class();
     $pendingCount = $notifObj->getPendingNotificationsCount();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -275,6 +274,20 @@
         </li>
         <li><a href="generate_report.php"><i class="fas fa-file-lines icon"></i><span class="menu-text">Generate Report</span></a></li>
         <li><a href="website_settings.php"><i class="fas fa-gear icon"></i><span class="menu-text">Website Settings</span></a></li>
+        <li class="nav-item payments-menu">
+            <a href="staff.php" class="nav-link">
+                <i class="fas fa-user-tie icon"></i>
+                <span class="menu-text">Staffs</span>
+            </a>
+            <ul class="submenu">
+                <li>
+                    <a href="staff_log.php">
+                        <i class="fas fa-user-clock icon"></i>
+                        <span class="menu-text">Staff Logs</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
         <li><a href="../sign/logout.php"><i class="fas fa-sign-out-alt icon"></i><span class="menu-text">Logout</span></a></li>
     </ul>
 </div>

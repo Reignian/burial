@@ -1,13 +1,14 @@
 <?php
-
-   require_once '../functions.php';
-    require_once 'account.class.php';
-
     session_start();
+    require_once '../functions.php';
+    require_once 'account.class.php';
 
     $username = $password = '';
     $accountObj = new Account();
     $loginErr = '';
+
+    // Get the return URL if set, default to index
+    $return_to = isset($_GET['return_to']) ? $_GET['return_to'] : '../index.php';
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $username = clean_input($_POST['username']);
@@ -20,7 +21,6 @@
         } elseif (empty($password)) {
             $loginErr = 'Password is required';
         }
-
         elseif ($accountObj->login($username, $password)) {
             $data = $accountObj->fetch($username);
             
@@ -34,7 +34,9 @@
                 if ($_SESSION['account']['is_admin']) {
                     header('location: ../admin/dashboard.php');
                 } elseif ($_SESSION['account']['is_customer']) {
-                    header('location: ../index.php');
+                    // Use the return_to URL for customers
+                    $redirect_url = isset($_POST['return_to']) ? $_POST['return_to'] : $return_to;
+                    header('location: ' . $redirect_url);
                 }
                 exit();
             }
@@ -211,6 +213,7 @@
             <a href="forgot_password.php" class="signup-link" style="text-align: end;">Forgot Password?</a>
 
             </div>
+            <input type="hidden" name="return_to" value="<?php echo htmlspecialchars($return_to); ?>">
             <input type="submit" value="Log In" name="login">
             <a href="signup.php" class="signup-link">Doesn't have an account? Sign Up</a>
         </form>

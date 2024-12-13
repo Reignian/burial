@@ -140,7 +140,7 @@ class Notification {
                         $this->createNotification(
                             $payment['account_id'],
                             'payment_missed',
-                            'Late Payment Penalty Applied',
+                            'Missed Payment Due',
                             "A penalty of ₱" . number_format($penalty_amount, 2) . " has been applied to your balance due to late payment.",
                             $payment['reservation_id']
                         );
@@ -270,7 +270,7 @@ class Notification {
             // Create status-specific message
             $lotInfo = $reservation['lot_name'] . " - " . $reservation['location'];
             if ($reservation['request'] == 'Pending') {
-                $message = "Your reservation request for $lotInfo is pending approval.";
+                $message = "Your reservation request for $lotInfo is currently pending.";
             } elseif ($reservation['request'] == 'Confirmed') {
                 $message = "Your reservation request for $lotInfo has been confirmed.";
             } else { // Cancelled

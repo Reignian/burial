@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 08, 2024 at 08:11 PM
+-- Generation Time: Dec 13, 2024 at 09:23 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -124,18 +124,21 @@ CREATE TABLE `account` (
   `email` varchar(255) DEFAULT NULL,
   `phone_number` varchar(20) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `is_customer` tinyint(1) NOT NULL DEFAULT 1,
+  `is_customer` tinyint(1) NOT NULL DEFAULT 0,
+  `is_staff` tinyint(1) NOT NULL DEFAULT 0,
   `is_admin` tinyint(1) NOT NULL DEFAULT 0,
-  `is_banned` tinyint(1) DEFAULT 0
+  `is_banned` tinyint(1) DEFAULT 0,
+  `reset_token` varchar(64) DEFAULT NULL,
+  `reset_token_expiry` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `account`
 --
 
-INSERT INTO `account` (`account_id`, `username`, `password`, `first_name`, `middle_name`, `last_name`, `email`, `phone_number`, `created_at`, `is_customer`, `is_admin`, `is_banned`) VALUES
-(8, 'admin', '$2y$10$N0qDeYTcgKNeSHCIqFb/cupIQPBV5g2SNtDVb7FlT1EfqVNYdk6C2', 'admin', '', 'admin', 'admin@gmail.com', '09991234567', '2024-10-12 14:11:57', 1, 1, 0),
-(9, 'reign', '$2y$10$cliEw.S4Tq7vLAU0n/TjhusXoNyW6ZLVNe//K7wWK53jWYTLKqqv6', 'Reign Ian', 'Carreon', 'Magno', 'reign@gmail.com', '09123456789', '2024-10-12 14:16:13', 1, 0, 0);
+INSERT INTO `account` (`account_id`, `username`, `password`, `first_name`, `middle_name`, `last_name`, `email`, `phone_number`, `created_at`, `is_customer`, `is_staff`, `is_admin`, `is_banned`, `reset_token`, `reset_token_expiry`) VALUES
+(8, 'admin', '$2y$10$N0qDeYTcgKNeSHCIqFb/cupIQPBV5g2SNtDVb7FlT1EfqVNYdk6C2', 'admin', '', 'admin', 'admin@gmail.com', '09991234567', '2024-10-12 14:11:57', 0, 0, 1, 0, NULL, NULL),
+(9, 'reign', '$2y$10$cliEw.S4Tq7vLAU0n/TjhusXoNyW6ZLVNe//K7wWK53jWYTLKqqv6', 'Reign Ian', 'Carreon', 'Magno', 'reign@gmail.com', '09123456789', '2024-10-12 14:16:13', 1, 0, 0, 0, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -175,6 +178,13 @@ CREATE TABLE `lots` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `lots`
+--
+
+INSERT INTO `lots` (`lot_id`, `lot_name`, `location`, `size`, `price`, `lot_image`, `status`, `description`, `created_at`) VALUES
+(20, 'lot 1', 'block 1', '25', 1000.00, 'lots_images/lot.jpg', 'Available', 'a', '2024-12-12 20:06:03');
+
 -- --------------------------------------------------------
 
 --
@@ -182,17 +192,14 @@ CREATE TABLE `lots` (
 --
 
 CREATE TABLE `notifications` (
-  `notification_id` int(11) NOT NULL AUTO_INCREMENT,
+  `notification_id` int(11) NOT NULL,
   `account_id` int(11) NOT NULL,
-  `type` enum('reservation_status','payment_success','payment_due') NOT NULL,
+  `type` enum('reservation_status','payment_success','payment_due_today','payment_due_tomorrow','payment_missed') NOT NULL,
   `title` varchar(255) NOT NULL,
   `message` text NOT NULL,
   `reference_id` int(11) DEFAULT NULL,
   `is_read` tinyint(1) NOT NULL DEFAULT 0,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`notification_id`),
-  KEY `account_id` (`account_id`),
-  CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`account_id`) REFERENCES `account` (`account_id`) ON DELETE CASCADE
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -232,7 +239,7 @@ INSERT INTO `payment_plan` (`payment_plan_id`, `plan`, `duration`, `down_payment
 (2, '12 months installment', 12, 20, 0, 0),
 (3, '24 months installment', 24, 20, 0, 0),
 (4, '3 years installment', 48, 0, 10, 0),
-(5, 'qq', 12, 20, 10, 0);
+(5, 'qq', 12, 30, 10, 0);
 
 -- --------------------------------------------------------
 
@@ -437,7 +444,7 @@ ALTER TABLE `about_team`
 -- AUTO_INCREMENT for table `account`
 --
 ALTER TABLE `account`
-  MODIFY `account_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `account_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `contact`
@@ -449,19 +456,19 @@ ALTER TABLE `contact`
 -- AUTO_INCREMENT for table `lots`
 --
 ALTER TABLE `lots`
-  MODIFY `lot_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `lot_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=113;
 
 --
 -- AUTO_INCREMENT for table `payment`
 --
 ALTER TABLE `payment`
-  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=96;
+  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=109;
 
 --
 -- AUTO_INCREMENT for table `payment_plan`
@@ -473,7 +480,7 @@ ALTER TABLE `payment_plan`
 -- AUTO_INCREMENT for table `penalty_log`
 --
 ALTER TABLE `penalty_log`
-  MODIFY `penalty_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
+  MODIFY `penalty_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
 
 --
 -- AUTO_INCREMENT for table `pubmat_1`
@@ -491,7 +498,7 @@ ALTER TABLE `pubmat_2`
 -- AUTO_INCREMENT for table `reservation`
 --
 ALTER TABLE `reservation`
-  MODIFY `reservation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
+  MODIFY `reservation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=86;
 
 --
 -- Constraints for dumped tables

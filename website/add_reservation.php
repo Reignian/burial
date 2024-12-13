@@ -4,29 +4,15 @@ session_start();
 require_once('../functions.php');
 require_once('lots.class.php');
 
-if (!isset($_SESSION['account']) || !$_SESSION['account']['is_customer']) {
-    header('location: login.php');
-    exit;
-}
-
-if (!isset($_SESSION['account']['account_id'])) {
-    echo "No account ID found in session";
-    exit;
-} else {
-    $account_id = $_SESSION['account']['account_id'];
-}
-
-$account_id = $_SESSION['account']['account_id'];
-
+$burialObj = new Reservation();
 $lot_id = $lot_image = $lot_name = $location = $size = $price = $description = '';
 $reservation_date = $payment_plan_id = '';
 $reservation_dateErr = $payment_plan_idErr = '';
 
-$burialObj = new Reservation();
-
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     if (isset($_GET['lot_id'])) {
         $lot_id = $_GET['lot_id'];
+        
         $record = $burialObj->fetchLotRecord($lot_id);
         if (!empty($record)) {
             $lot_image = $record['lot_image'];
@@ -39,14 +25,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
             echo 'No lot found';
             exit;
         }
-    } else {
-        echo 'No lot id found';
-        exit;
     }
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST'){
+    // Check if user is logged in
+    if(!isset($_SESSION['account'])){
+        // Store the form data in session
+        $_SESSION['pending_reservation'] = $_POST;
+        header('location: ../sign/login.php?return_to=' . urlencode('/burial/browse_lots.php'));
+        exit();
+    }
 
+    // If user is admin or not a customer, redirect to admin dashboard
+    if($_SESSION['account']['is_admin'] || !$_SESSION['account']['is_customer']){
+        header('location: ../admin/dashboard.php');
+        exit();
+    }
+
+    $account_id = $_SESSION['account']['account_id'];
     $lot_id = clean_input($_POST['lot_id']);
     $reservation_date = clean_input($_POST['reservation_date']);
     $payment_plan_id = clean_input($_POST['payment_plan']);
@@ -73,7 +70,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
     }
 
     if(empty($reservation_dateErr) && empty($payment_plan_idErr)){
-
         $burialObj->reservation_date = $reservation_date;
         $burialObj->payment_plan_id = $payment_plan_id;
         $burialObj->lot_id = $lot_id;
@@ -85,7 +81,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
             echo 'Something went wrong when adding reservation';
         }
     }
-
 }
 ?>
 
@@ -244,11 +239,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
             </div>
             
             <?php
-                $account = $burialObj->fetchAccountRecord($account_id);
+                if(isset($_SESSION['account'])){
+                    $account = $burialObj->fetchAccountRecord($_SESSION['account']['account_id']);
+                }
             ?>
             <div class="col-md-6">
                 <div class="right-panel">
                     <h2 class="fs-2 fw-bold mb-4">Reservation Details</h2>
+                    <?php if(isset($_SESSION['account'])): ?>
                     <div class="account-details mb-4">
                         <h3 class="fs-5 fw-bold mb-3">Account Information</h3>
                         <div class="mb-2">
@@ -261,6 +259,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
                             <strong>Phone:</strong> <?= $account['phone_number']?>
                         </div>
                     </div>
+                    <?php endif; ?>
 
                     <form action="" method="post">
                         <input type="hidden" name="lot_id" value="<?= htmlspecialchars($lot_id) ?>">

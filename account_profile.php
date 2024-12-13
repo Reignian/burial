@@ -1,20 +1,33 @@
 <?php
+    session_start();
+
+    // Check if user is logged in
+    if(!isset($_SESSION['account'])){
+        header('location: sign/login.php?return_to=' . urlencode($_SERVER['PHP_SELF']));
+        exit();
+    }
+
+    // If user is admin, always redirect to admin dashboard, no exceptions
+    if($_SESSION['account']['is_admin']){
+        header('location: admin/dashboard.php');
+        exit();
+    }
+
+    // If user is not a customer, redirect to index
+    if(!$_SESSION['account']['is_customer']){
+        header('location: index.php');
+        exit();
+    }
+
+    // Add cache control headers to prevent back-button issues
+    header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+    header("Cache-Control: post-check=0, pre-check=0", false);
+    header("Pragma: no-cache");
+
     include(__DIR__ . '/includes/header.php');
     require_once __DIR__ . '/website/lots.class.php';
 
     $burialObj = new Reservation();
-
-    if (!isset($_SESSION['account']) || !$_SESSION['account']['is_customer']) {
-        header('location: login.php');
-        exit;
-    }
-
-    if (!isset($_SESSION['account']['account_id'])) {
-        echo "No account ID found in session";
-        exit;
-    } else {
-        $account_id = $_SESSION['account']['account_id'];
-    }
 
     $account_id = $_SESSION['account']['account_id'];
 
@@ -104,6 +117,8 @@
                 } elseif ($payment_status === 'overdue') {
                     $card_class = ' overdue';
                 }
+
+                $next_payment = $burialObj->getNextPaymentSchedule($reservation['reservation_id']);
             ?>
                 <a href="transactions.php?reservation_id=<?= $reservation['reservation_id'] ?>" class="lot-link">
                     <div class="lot-card p-0 mb-4<?= $card_class ?>">
@@ -122,8 +137,8 @@
                                     <div>
                                         <p class="mb-1">Payment Plan: <?= $reservation['plan'] ?></p>
                                         <p class="mb-1">Monthly Payment:  <?= '₱ ' . number_format($reservation['monthly_payment'], 2) ?></p>
-                                        <p class="mb-1">Due: <?= $status ?></p>
-                                        <p class="mb-1">Date: <?= date('F d, Y', strtotime($reservation['reservation_date'])) ?></p>
+                                        <p class="mb-1">Payment Status: <?= $status ?></p>
+                                        <p class="mb-1">Due: <?= date('F d, Y', strtotime($next_payment)) ?></p>
                                     </div>
                                     
                                     <div>

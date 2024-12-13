@@ -1,14 +1,4 @@
-<?php
-  session_start();
-
-    if(isset($_SESSION['account'])){
-        if(!$_SESSION['account']['is_customer']){
-            header('location: ./sign/login.php');
-        }
-    }else{
-        header('location: ./sign/login.php');
-    }
-?>
+<?php ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
