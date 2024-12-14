@@ -1,5 +1,5 @@
 <?php
-
+session_start();
 require_once ('../../functions.php');
 require_once ('lots.class.php');
 
@@ -112,7 +112,6 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>

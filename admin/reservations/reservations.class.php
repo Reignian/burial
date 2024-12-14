@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../../database.php';
 require_once __DIR__ . '/../../website/notification.class.php';
+require_once __DIR__ . '/../staffs/staffs.class.php';
 
 class Reservation_class{
 
@@ -46,82 +47,73 @@ class Reservation_class{
     }
 
     public function cancelReservation($reservationID) {
-        // Start transaction
-        $this->db->connect()->beginTransaction();
-
         try {
-            // Get reservation details first
-            $sql = "SELECT r.account_id, 
-                          CONCAT(a.last_name, ', ', a.first_name, ' ', a.middle_name) as client_name,
-                          CONCAT(l.lot_name, ' - ', l.location) as lot_details
-                    FROM reservation r 
-                    JOIN account a ON r.account_id = a.account_id 
-                    JOIN lots l ON r.lot_id = l.lot_id
-                    WHERE r.reservation_id = :reservation_id";
+            $this->db->connect()->beginTransaction();
+
+            // Get reservation details before cancellation
+            $sql = "SELECT r.*, 
+                   CONCAT(a.last_name, ', ', a.first_name, ' ', COALESCE(a.middle_name, '')) as client_name,
+                   CONCAT(l.lot_name, ' - ', l.location) as lot_details,
+                   pp.plan as payment_plan,
+                   (SELECT COUNT(*) FROM payment p WHERE p.reservation_id = r.reservation_id) as payment_count,
+                   (SELECT SUM(amount_paid) FROM payment p WHERE p.reservation_id = r.reservation_id) as total_paid
+            FROM reservation r
+            JOIN account a ON r.account_id = a.account_id
+            JOIN lots l ON r.lot_id = l.lot_id
+            JOIN payment_plan pp ON r.payment_plan_id = pp.payment_plan_id
+            WHERE r.reservation_id = :reservation_id";
+            
             $query = $this->db->connect()->prepare($sql);
             $query->bindParam(':reservation_id', $reservationID);
             $query->execute();
-            $result = $query->fetch();
-            $client_name = $result['client_name'];
-            $lot_details = $result['lot_details'];
-
-            // Check if the reservation exists and get its details
-            $sqlCheckReservation = "SELECT r.reservation_id, r.reservation_date, r.balance, r.account_id, l.lot_id 
-                                    FROM reservation r
-                                    LEFT JOIN lots l ON r.lot_id = l.lot_id
-                                    WHERE r.reservation_id = :reservation_id AND r.request != 'cancelled'";
-            $query = $this->db->connect()->prepare($sqlCheckReservation);
-            $query->bindParam(':reservation_id', $reservationID);
-            $query->execute();
-            $reservationDetails = $query->fetch();
-
-            if (!$reservationDetails) {
-                $this->db->connect()->rollBack();
-                return "Reservation not found or already cancelled.";
-            }
+            $reservationDetails = $query->fetch(PDO::FETCH_ASSOC);
 
             // Update reservation status
-            $sqlUpdateStatus = "UPDATE reservation SET request = 'cancelled' WHERE reservation_id = :reservation_id";
-            $query = $this->db->connect()->prepare($sqlUpdateStatus);
+            $sql = "UPDATE reservation SET request = 'Cancelled' WHERE reservation_id = :reservation_id";
+            $query = $this->db->connect()->prepare($sql);
             $query->bindParam(':reservation_id', $reservationID);
+
+            if($query->execute()){
+                // Create detailed log
+                if(isset($_SESSION['account']) && isset($_SESSION['account']['account_id'])) {
+                    $logDetails = sprintf(
+                        "Cancelled Reservation #%d:\n" .
+                        "Client: %s\n" .
+                        "Lot: %s\n" .
+                        "Payment Plan: %s\n" .
+                        "Reservation Date: %s\n" .
+                        "Total Payments Made: %d\n" .
+                        "Total Amount Paid: ₱%s\n" .
+                        "Remaining Balance: ₱%s\n" .
+                        "Cancellation Date: %s",
+                        $reservationID,
+                        $reservationDetails['client_name'],
+                        $reservationDetails['lot_details'],
+                        $reservationDetails['payment_plan'],
+                        date('F j, Y', strtotime($reservationDetails['reservation_date'])),
+                        $reservationDetails['payment_count'],
+                        number_format($reservationDetails['total_paid'], 2),
+                        number_format($reservationDetails['balance'], 2),
+                        date('F j, Y g:i A')
+                    );
+                    
+                    $staffs = new Staffs_class();
+                    $staffs->addStaffLog(
+                        $_SESSION['account']['account_id'],
+                        'Cancel Reservation',
+                        $logDetails
+                    );
+                }
+
+                $this->db->connect()->commit();
+                return true;
+            }
             
-            if (!$query->execute()) {
-                $this->db->connect()->rollBack();
-                return "Failed to cancel reservation.";
-            }
-
-            // Update lot status
-            $sqlUpdateLot = "UPDATE lots SET status = 'available' WHERE lot_id = :lot_id";
-            $query = $this->db->connect()->prepare($sqlUpdateLot);
-            $query->bindParam(':lot_id', $reservationDetails['lot_id']);
-            
-            if (!$query->execute()) {
-                $this->db->connect()->rollBack();
-                return "Failed to update lot status.";
-            }
-
-            // Create notification
-            $notificationObj = new Notification();
-            $title = "Reservation Cancelled";
-            $message = "Your reservation has been cancelled.";
-            $notificationObj->createNotification($reservationDetails['account_id'], 'reservation_status', $title, $message, $reservationID);
-
-            // Log the cancellation
-            if(isset($_SESSION['account']) && isset($_SESSION['account']['account_id'])) {
-                require_once __DIR__ . '/../staffs/staffs.class.php';
-                $staffs = new Staffs_class();
-                $staffs->addStaffLog(
-                    $_SESSION['account']['account_id'],
-                    'Cancel Reservation',
-                    "(" . $lot_details . ") - " . $client_name
-                );
-            }
-
-            $this->db->connect()->commit();
-            return true;
+            $this->db->connect()->rollBack();
+            return false;
         } catch (Exception $e) {
             $this->db->connect()->rollBack();
-            return "An error occurred: " . $e->getMessage();
+            return false;
         }
     }
 
@@ -390,54 +382,192 @@ class Reservation_class{
         return true;
     }
 
-    function addPayment($reservation_id, $amount_paid) {
-        // Start transaction
-        $this->db->connect()->beginTransaction();
-
+    public function addPayment($reservation_id, $amount_paid) {
         try {
-            // Get account_id, client details, and lot details for the reservation
-            $sql = "SELECT r.account_id, 
-                          CONCAT(a.last_name, ', ', a.first_name, ' ', a.middle_name) as client_name,
-                          CONCAT(l.lot_name, ' - ', l.location) as lot_details
-                    FROM reservation r 
-                    JOIN account a ON r.account_id = a.account_id 
-                    JOIN lots l ON r.lot_id = l.lot_id
-                    WHERE r.reservation_id = :reservation_id";
+            $this->db->connect()->beginTransaction();
+
+            // Get reservation details before payment
+            $sql = "SELECT r.*, 
+                   CONCAT(a.last_name, ', ', a.first_name, ' ', COALESCE(a.middle_name, '')) as client_name,
+                   CONCAT(l.lot_name, ' - ', l.location) as lot_details,
+                   pp.plan as payment_plan,
+                   r.monthly_payment
+            FROM reservation r
+            JOIN account a ON r.account_id = a.account_id
+            JOIN lots l ON r.lot_id = l.lot_id
+            JOIN payment_plan pp ON r.payment_plan_id = pp.payment_plan_id
+            WHERE r.reservation_id = :reservation_id";
+            
             $query = $this->db->connect()->prepare($sql);
             $query->bindParam(':reservation_id', $reservation_id);
             $query->execute();
-            $result = $query->fetch();
-            $account_id = $result['account_id'];
-            $client_name = $result['client_name'];
-            $lot_details = $result['lot_details'];
+            $reservationDetails = $query->fetch(PDO::FETCH_ASSOC);
 
-            // Insert payment
-            $sql = "INSERT INTO payment (reservation_id, amount_paid) VALUES (:reservation_id, :amount_paid)";
+            // Get current balance before payment
+            $current_balance = $this->Balance($reservation_id);
+            
+            // Add payment record
+            $payment_date = date('Y-m-d H:i:s');
+            $sql = "INSERT INTO payment (reservation_id, amount_paid, payment_date) VALUES (:reservation_id, :amount_paid, :payment_date)";
             $query = $this->db->connect()->prepare($sql);
             $query->bindParam(':reservation_id', $reservation_id);
             $query->bindParam(':amount_paid', $amount_paid);
+            $query->bindParam(':payment_date', $payment_date);
             
-            if ($query->execute()) {
-                // Create notification
-                $this->createPaymentSuccessNotification($account_id, $reservation_id, $amount_paid);
-
-                // Log the payment action
+            if($query->execute()){
+                // Create detailed log
                 if(isset($_SESSION['account']) && isset($_SESSION['account']['account_id'])) {
-                    require_once __DIR__ . '/../staffs/staffs.class.php';
+                    // Calculate new balance after payment
+                    $new_balance = $this->Balance($reservation_id);
+                    
+                    $logDetails = sprintf(
+                        "Added payment for Reservation #%d:\n" .
+                        "Client: %s\n" .
+                        "Lot: %s\n" .
+                        "Payment Plan: %s\n" .
+                        "Amount Paid: ₱%s\n" .
+                        "Previous Balance: ₱%s\n" .
+                        "New Balance: ₱%s\n" .
+                        "Monthly Payment: ₱%s\n" .
+                        "Payment Date: %s",
+                        $reservation_id,
+                        $reservationDetails['client_name'],
+                        $reservationDetails['lot_details'],
+                        $reservationDetails['payment_plan'],
+                        number_format($amount_paid, 2),
+                        number_format($current_balance, 2),
+                        number_format($new_balance, 2),
+                        number_format($reservationDetails['monthly_payment'], 2),
+                        date('F j, Y g:i A', strtotime($payment_date))
+                    );
+                    
                     $staffs = new Staffs_class();
                     $staffs->addStaffLog(
                         $_SESSION['account']['account_id'],
                         'Add Payment',
-                        "₱" . number_format($amount_paid, 2) . " (" . $lot_details . ") - " . $client_name
+                        $logDetails
+                    );
+                }
+
+                // Create notification for the client
+                $this->createPaymentSuccessNotification(
+                    $reservationDetails['account_id'],
+                    $reservation_id,
+                    $amount_paid
+                );
+
+                $this->db->connect()->commit();
+                return true;
+            }
+            
+            $this->db->connect()->rollBack();
+            return false;
+            
+        } catch (Exception $e) {
+            $this->db->connect()->rollBack();
+            return false;
+        }
+    }
+
+    public function editReservation($reservation_id, $reservation_date, $payment_plan_id) {
+        try {
+            $this->db->connect()->beginTransaction();
+
+            // Get reservation details before update
+            $sql = "SELECT r.*, 
+                   CONCAT(a.last_name, ', ', a.first_name, ' ', COALESCE(a.middle_name, '')) as client_name,
+                   CONCAT(l.lot_name, ' - ', l.location) as lot_details,
+                   pp_old.plan as old_payment_plan,
+                   pp_new.plan as new_payment_plan,
+                   l.price as lot_price
+            FROM reservation r
+            JOIN account a ON r.account_id = a.account_id
+            JOIN lots l ON r.lot_id = l.lot_id
+            JOIN payment_plan pp_old ON r.payment_plan_id = pp_old.payment_plan_id
+            JOIN payment_plan pp_new ON pp_new.payment_plan_id = :new_payment_plan_id
+            WHERE r.reservation_id = :reservation_id";
+            
+            $query = $this->db->connect()->prepare($sql);
+            $query->bindParam(':reservation_id', $reservation_id);
+            $query->bindParam(':new_payment_plan_id', $payment_plan_id);
+            $query->execute();
+            $oldDetails = $query->fetch(PDO::FETCH_ASSOC);
+
+            // Get new payment plan details
+            $sql = "SELECT * FROM payment_plan WHERE payment_plan_id = :payment_plan_id";
+            $query = $this->db->connect()->prepare($sql);
+            $query->bindParam(':payment_plan_id', $payment_plan_id);
+            $query->execute();
+            $new_plan = $query->fetch();
+            
+            // Calculate new payment details
+            if ($new_plan['duration'] > 0) {
+                $principal = $oldDetails['lot_price'] * (1 - ($new_plan['down_payment'] / 100));
+                if ($new_plan['interest_rate'] > 0) {
+                    $interest = $principal * ($new_plan['interest_rate'] / 100);
+                    $total_amount = $principal + $interest;
+                } else {
+                    $total_amount = $principal;
+                }
+                $monthly_payment = $total_amount / $new_plan['duration'];
+            } else {
+                // Spot cash
+                $monthly_payment = 0;
+                $total_amount = $oldDetails['lot_price'];
+            }
+
+            // Update reservation
+            $sql = "UPDATE reservation SET 
+                   reservation_date = :reservation_date, 
+                   payment_plan_id = :payment_plan_id,
+                   monthly_payment = :monthly_payment,
+                   balance = :balance 
+                   WHERE reservation_id = :reservation_id";
+            $query = $this->db->connect()->prepare($sql);
+            $query->bindParam(':reservation_id', $reservation_id);
+            $query->bindParam(':reservation_date', $reservation_date);
+            $query->bindParam(':payment_plan_id', $payment_plan_id);
+            $query->bindParam(':monthly_payment', $monthly_payment);
+            $query->bindParam(':balance', $total_amount);
+
+            if($query->execute()){
+                // Create detailed log
+                if(isset($_SESSION['account']) && isset($_SESSION['account']['account_id'])) {
+                    $logDetails = sprintf(
+                        "Updated Reservation #%d:\n" .
+                        "Client: %s\n" .
+                        "Lot: %s\n" .
+                        "Old Payment Plan: %s\n" .
+                        "New Payment Plan: %s\n" .
+                        "Old Reservation Date: %s\n" .
+                        "New Reservation Date: %s\n" .
+                        "New Monthly Payment: ₱%s\n" .
+                        "New Balance: ₱%s",
+                        $reservation_id,
+                        $oldDetails['client_name'],
+                        $oldDetails['lot_details'],
+                        $oldDetails['old_payment_plan'],
+                        $oldDetails['new_payment_plan'],
+                        date('F j, Y', strtotime($oldDetails['reservation_date'])),
+                        date('F j, Y', strtotime($reservation_date)),
+                        number_format($monthly_payment, 2),
+                        number_format($total_amount, 2)
+                    );
+                    
+                    $staffs = new Staffs_class();
+                    $staffs->addStaffLog(
+                        $_SESSION['account']['account_id'],
+                        'Edit Reservation',
+                        $logDetails
                     );
                 }
 
                 $this->db->connect()->commit();
                 return true;
-            } else {
-                $this->db->connect()->rollBack();
-                return false;
             }
+            
+            $this->db->connect()->rollBack();
+            return false;
         } catch (Exception $e) {
             $this->db->connect()->rollBack();
             return false;
@@ -547,95 +677,5 @@ class Reservation_class{
         $query = $this->db->connect()->prepare($sql);
         $query->execute();
         return $query->fetchAll();
-    }
-
-    function editReservation($reservation_id, $reservation_date, $payment_plan_id) {
-        // Start transaction
-        $this->db->connect()->beginTransaction();
-
-        try {
-            // Get reservation details first for logging
-            $sql = "SELECT r.account_id, 
-                          CONCAT(a.last_name, ', ', a.first_name, ' ', a.middle_name) as client_name,
-                          CONCAT(l.lot_name, ' - ', l.location) as lot_details,
-                          l.price,
-                          pp.plan as payment_plan_name,
-                          pp.duration,
-                          pp.down_payment,
-                          pp.interest_rate
-                    FROM reservation r 
-                    JOIN account a ON r.account_id = a.account_id 
-                    JOIN lots l ON r.lot_id = l.lot_id
-                    JOIN payment_plan pp ON r.payment_plan_id = pp.payment_plan_id
-                    WHERE r.reservation_id = :reservation_id";
-            $query = $this->db->connect()->prepare($sql);
-            $query->bindParam(':reservation_id', $reservation_id);
-            $query->execute();
-            $result = $query->fetch();
-            $client_name = $result['client_name'];
-            $lot_details = $result['lot_details'];
-            
-            // Calculate new monthly payment and balance
-            $lot_price = $result['price'];
-            
-            // Get new payment plan details
-            $sql = "SELECT * FROM payment_plan WHERE payment_plan_id = :payment_plan_id";
-            $query = $this->db->connect()->prepare($sql);
-            $query->bindParam(':payment_plan_id', $payment_plan_id);
-            $query->execute();
-            $new_plan = $query->fetch();
-            
-            // Calculate new payment details
-            if ($new_plan['duration'] > 0) {
-                $principal = $lot_price * (1 - ($new_plan['down_payment'] / 100));
-                if ($new_plan['interest_rate'] > 0) {
-                    $interest = $principal * ($new_plan['interest_rate'] / 100);
-                    $total_amount = $principal + $interest;
-                } else {
-                    $total_amount = $principal;
-                }
-                $monthly_payment = $total_amount / $new_plan['duration'];
-            } else {
-                // Spot cash
-                $monthly_payment = 0;
-                $total_amount = $lot_price;
-            }
-
-            // Update reservation
-            $sql = "UPDATE reservation 
-                   SET reservation_date = :reservation_date, 
-                       payment_plan_id = :payment_plan_id,
-                       monthly_payment = :monthly_payment,
-                       balance = :balance 
-                   WHERE reservation_id = :reservation_id";
-            $query = $this->db->connect()->prepare($sql);
-            $query->bindParam(':reservation_id', $reservation_id);
-            $query->bindParam(':reservation_date', $reservation_date);
-            $query->bindParam(':payment_plan_id', $payment_plan_id);
-            $query->bindParam(':monthly_payment', $monthly_payment);
-            $query->bindParam(':balance', $total_amount);
-
-            if ($query->execute()) {
-                // Log the edit action
-                if(isset($_SESSION['account']) && isset($_SESSION['account']['account_id'])) {
-                    require_once __DIR__ . '/../staffs/staffs.class.php';
-                    $staffs = new Staffs_class();
-                    $staffs->addStaffLog(
-                        $_SESSION['account']['account_id'],
-                        'Edit Reservation',
-                        "(" . $lot_details . ") - " . $client_name
-                    );
-                }
-
-                $this->db->connect()->commit();
-                return true;
-            } else {
-                $this->db->connect()->rollBack();
-                return false;
-            }
-        } catch (Exception $e) {
-            $this->db->connect()->rollBack();
-            return false;
-        }
     }
 }

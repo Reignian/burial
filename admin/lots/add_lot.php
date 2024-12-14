@@ -1,58 +1,40 @@
 <?php
-
+session_start();
 require_once ('../../functions.php');
 require_once ('lots.class.php');
 
 $lot_name = $location = $size = $price = $description = '';
 $lot_nameErr = $locationErr = $sizeErr = $lot_imageErr = $priceErr = $descriptionErr = '';
 $lot_image = '';
+$alert_message = '';
 
 $burialObj = new Lots_class();
 
-if($_SERVER['REQUEST_METHOD'] == 'POST'){
-
+if(isset($_POST['add_lot'])){
     $lot_name = clean_input(($_POST['lot_name']));
     $location = clean_input(($_POST['location']));
     $size = clean_input(($_POST['size']));
     $price = clean_input(($_POST['price']));
     $description = clean_input(($_POST['description']));
-    
-    if (!empty($_FILES['lot_image']['name'])) {
-        $allowed_types = ['jpg', 'jpeg', 'png'];  // Allowed image types
-        $file_ext = strtolower(pathinfo($_FILES['lot_image']['name'], PATHINFO_EXTENSION));
-        
-        if (!in_array($file_ext, $allowed_types)) {
-            $lot_imageErr = 'Only JPG, JPEG, PNG formats are allowed';
-        } elseif ($_FILES['lot_image']['size'] > 10000000) {  // 10MB file size limit
-            $lot_imageErr = 'Image size should not exceed 5MB';
-        } else {
-            $lot_image = $_FILES['lot_image']['name'];
-            $tempname = $_FILES['lot_image']['tmp_name'];
-            $folder = 'lots_images/' . $lot_image;
 
-            // Step 2: Move the uploaded file
-            if (!move_uploaded_file($tempname, $folder)) {
-                $lot_imageErr = 'Failed to upload image';
-            }
-        }
-    } else {
-        $lot_imageErr = 'Image is required';
-    }
-
+    // Validate lot name
     if(empty($lot_name)){
         $lot_nameErr = 'Lot name is required';
     }
 
+    // Validate location
     if(empty($location)){
         $locationErr = 'Location is required';
     }
 
+    // Validate size
     if(empty($size)){
         $sizeErr = 'Size is required';
-    }else if (!is_numeric($size)){
+    } else if (!is_numeric($size)){
         $sizeErr = 'Size should be a number';
     }
 
+    // Validate price
     if(empty($price)){
         $priceErr = 'Price is required';
     } else if (!is_numeric($price)){
@@ -61,24 +43,78 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
         $priceErr = 'Price must be greater than 0';
     }
 
+    // Validate description
     if(empty($description)){
         $descriptionErr = 'Description is required';
     }
 
+    // Image handling
+    if(isset($_FILES['lot_image']) && $_FILES['lot_image']['error'] === 0) {
+        $file = $_FILES['lot_image'];
+        $file_name = $file['name'];
+        $file_tmp = $file['tmp_name'];
+        $file_size = $file['size'];
+        $file_error = $file['error'];
 
-    if(empty($lot_nameErr) && empty($priceErr) && empty($locationErr) && empty($sizeErr) && empty($statusErr) && empty($descriptionErr) && empty($lot_imageErr)){
+        // Get file extension
+        $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+        $allowed = array('jpg', 'jpeg', 'png');
 
+        if(in_array($file_ext, $allowed)){
+            if($file_error === 0){
+                if($file_size <= 10485760){ // 10MB limit (10 * 1024 * 1024)
+                    // Generate unique filename
+                    $file_name_parts = pathinfo($file_name);
+                    $unique_filename = $file_name_parts['filename'];
+                    $counter = 1;
+                    
+                    // Keep checking and incrementing counter until we find a unique filename
+                    while(file_exists("lots_images/" . $unique_filename . "." . $file_ext)) {
+                        $unique_filename = $file_name_parts['filename'] . '_' . $counter;
+                        $counter++;
+                    }
+                    
+                    // Create directory if it doesn't exist
+                    if (!file_exists("lots_images")) {
+                        mkdir("lots_images", 0777, true);
+                    }
+                    
+                    $folder = "lots_images/" . $unique_filename . "." . $file_ext;
+                    $destination = $folder;
+
+                    if(move_uploaded_file($file_tmp, $destination)){
+                        $lot_image = $folder;
+                    } else {
+                        $lot_imageErr = 'Error uploading file';
+                    }
+                } else {
+                    $lot_imageErr = 'File size must be less than 10MB';
+                }
+            } else {
+                $lot_imageErr = 'Error uploading file';
+            }
+        } else {
+            $lot_imageErr = 'Invalid file type. Only JPG, JPEG, and PNG files are allowed';
+        }
+    } else {
+        $lot_imageErr = 'Image is required';
+    }
+
+    if($lot_nameErr == '' && $locationErr == '' && $sizeErr == '' && $lot_imageErr == '' && $priceErr == '' && $descriptionErr == ''){
         $burialObj->lot_name = $lot_name;
         $burialObj->location = $location;
-        $burialObj->price = $price;
         $burialObj->size = $size;
+        $burialObj->price = $price;
+        $burialObj->lot_image = $lot_image;
         $burialObj->description = $description;
-        $burialObj->lot_image = $folder;
-
-        if($burialObj->addlot()){
-            header('location: ../lots.php');
+        
+        $result = $burialObj->addLot();
+        
+        if($result['success']){
+            header('location: ../lots.php?status=created');
+            exit;
         } else {
-            echo 'Something went wrong when adding new lot';
+            $alert_message = $result['message'];
         }
     }
 }
@@ -143,23 +179,39 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
             background-color: #00838f;
         }
         .error {
-            color: #d32f2f;
-            font-size: 14px;
-            margin-top: 5px;
+            color: red;
+            font-size: 0.8em;
         }
-        .required {
-            color: #d32f2f;
+        .alert {
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
         }
         #imagePreview {
-            max-width: 100%;
-            margin-top: 10px;
-            border-radius: 4px;
+            max-width: 200px;
+            max-height: 200px;
             display: none;
+            margin-top: 10px;
+            object-fit: contain;
+        }
+        .preview-container {
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <?php if(!empty($alert_message)): ?>
+            <div class="alert alert-danger">
+                <?php echo htmlspecialchars($alert_message); ?>
+            </div>
+        <?php endif; ?>
         <h1>Add New Lot</h1>
         <form action="" method="post" enctype="multipart/form-data">
             <div>
@@ -188,7 +240,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
 
             <div>
                 <label for="price">Price <span class="required">*</span></label>
-                <input type="number" name="price" id="price" value="<?= isset($_POST['price'])? $price: '' ?>">
+                <input type="number" name="price" id="price" value="<?= $price ?>">
                 <?php if(!empty($priceErr)): ?>
                     <span class="error"><?= $priceErr ?></span>
                 <?php endif; ?>
@@ -196,11 +248,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
 
             <div>
                 <label for="lot_image">Image <span class="required">*</span></label>
-                <input type="file" name="lot_image" id="lot_image" accept="image/*" onchange="previewImage(this);">
-                <?php if (!empty($lot_imageErr)): ?>
-                    <span class="error"><?= $lot_imageErr ?></span>
+                <input type="file" name="lot_image" id="lot_image" accept=".jpg,.jpeg,.png" onchange="previewImage(this);">
+                <?php if(!empty($lot_imageErr)): ?>
+                    <span class="error"><?php echo $lot_imageErr; ?></span>
                 <?php endif; ?>
-                <img id="imagePreview" src="#" alt="Image preview" />
+                <div class="preview-container">
+                    <img id="imagePreview" src="#" alt="Image preview" />
+                </div>
             </div>
 
             <div>
@@ -212,20 +266,22 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
             </div>
 
             <div>
-                <input type="submit" value="Add Lot">
+                <input type="submit" name="add_lot" value="Add Lot">
             </div>
         </form>
     </div>
 
     <script>
         function previewImage(input) {
-            var preview = document.getElementById('imagePreview');
+            const preview = document.getElementById('imagePreview');
             if (input.files && input.files[0]) {
-                var reader = new FileReader();
+                const reader = new FileReader();
+                
                 reader.onload = function(e) {
                     preview.src = e.target.result;
                     preview.style.display = 'block';
                 }
+                
                 reader.readAsDataURL(input.files[0]);
             } else {
                 preview.src = '#';

@@ -59,12 +59,22 @@ class Staffs_class {
     }
 
     function addStaffLog($staff_id, $action, $details = '') {
-        $sql = "INSERT INTO staff_logs (staff_id, action, details, log_date) VALUES (:staff_id, :action, :details, NOW())";
-        $query = $this->db->connect()->prepare($sql);
-        $query->bindParam(':staff_id', $staff_id, PDO::PARAM_INT);
-        $query->bindParam(':action', $action, PDO::PARAM_STR);
-        $query->bindParam(':details', $details, PDO::PARAM_STR);
-        return $query->execute();
+        try {
+            error_log("Adding staff log - Staff ID: $staff_id, Action: $action");
+            $sql = "INSERT INTO staff_logs (staff_id, action, details, log_date) VALUES (:staff_id, :action, :details, NOW())";
+            $query = $this->db->connect()->prepare($sql);
+            $query->bindParam(':staff_id', $staff_id, PDO::PARAM_INT);
+            $query->bindParam(':action', $action, PDO::PARAM_STR);
+            $query->bindParam(':details', $details, PDO::PARAM_STR);
+            $result = $query->execute();
+            if (!$result) {
+                error_log("Failed to add staff log: " . json_encode($query->errorInfo()));
+            }
+            return $result;
+        } catch (Exception $e) {
+            error_log("Error adding staff log: " . $e->getMessage());
+            return false;
+        }
     }
 
     function getStaffLogs() {

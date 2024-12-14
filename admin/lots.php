@@ -7,7 +7,6 @@
 
     $lotarray = $burialObj->showALL_lots();
 ?>
-
 <!-- Add DataTables CSS after Bootstrap CSS -->
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
 
@@ -129,13 +128,13 @@ $(document).ready(function() {
             let lotId = this.dataset.id;
             if (confirm("Are you sure you want to delete this lot?")) {
                 fetch('lots/delete_lot.php?lot_id=' + lotId, { method: 'GET' })
-                .then(response => response.text())
+                .then(response => response.json())
                 .then(data => {
-                    if(data === 'success') {
+                    if(data.success) {
                         alert('Lot deleted successfully.');
                         window.location.reload();
                     } else {
-                        alert('Failed to delete lot.');
+                        alert(data.message || 'Failed to delete lot.');
                     }
                 });
             }
