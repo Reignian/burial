@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../../database.php';
 require_once __DIR__ . '/../../website/notification.class.php';
+require_once __DIR__ . '/../staffs/staffs.class.php';
 
 class Notifications_class{
 
@@ -124,9 +125,40 @@ class Notifications_class{
                 // Create notification for cancelled reservation
                 $notificationObj = new Notification();
                 $lotName = $this->account_lot($reservation_id);
+                $accountName = $this->account($reservation_id);
+                $lot = $this->fetchLotRecord($reservation['lot_id']);
+                $payment_plan = $this->fetchPayment_planRecord($reservation['payment_plan_id']);
                 $title = "Reservation Cancelled";
                 $message = "Your reservation for lot " . $lotName . " has been cancelled.";
                 $notificationObj->createNotification($reservation['account_id'], 'reservation_status', $title, $message, $reservation_id);
+                
+                // Add staff log with more details
+                if(isset($_SESSION['account']) && isset($_SESSION['account']['account_id'])) {
+                    $staffs = new Staffs_class();
+                    $logDetails = sprintf(
+                        "Cancelled Reservation Details:\n" .
+                        "Reservation ID: #%d\n" .
+                        "Client: %s\n" .
+                        "Lot Details:\n" .
+                        "- Name: %s\n" .
+                        "- Location: %s\n" .
+                        "- Size: %s sqm\n" .
+                        "- Price: ₱%s\n" .
+                        "Payment Plan: %s\n" .
+                        "Reservation Date: %s\n" .
+                        "Cancellation Date: %s",
+                        $reservation_id,
+                        $accountName,
+                        $lot['lot_name'],
+                        $lot['location'],
+                        $lot['size'],
+                        number_format($lot['price'], 2),
+                        $payment_plan['plan'],
+                        date('F j, Y', strtotime($reservation['reservation_date'])),
+                        date('F j, Y g:i A')
+                    );
+                    $staffs->addStaffLog($_SESSION['account']['account_id'], 'Cancel Reservation', $logDetails);
+                }
                 
                 return true;
             }
@@ -158,9 +190,42 @@ class Notifications_class{
                 // Create notification for confirmed reservation
                 $notificationObj = new Notification();
                 $lotName = $this->account_lot($reservation_id);
+                $accountName = $this->account($reservation_id);
+                $lot = $this->fetchLotRecord($reservation['lot_id']);
+                $payment_plan = $this->fetchPayment_planRecord($reservation['payment_plan_id']);
                 $title = "Reservation Confirmed";
                 $message = "Your reservation for lot " . $lotName . " has been confirmed.";
                 $notificationObj->createNotification($reservation['account_id'], 'reservation_status', $title, $message, $reservation_id);
+                
+                // Add staff log with more details
+                if(isset($_SESSION['account']) && isset($_SESSION['account']['account_id'])) {
+                    $staffs = new Staffs_class();
+                    $logDetails = sprintf(
+                        "Confirmed Reservation Details:\n" .
+                        "Reservation ID: #%d\n" .
+                        "Client: %s\n" .
+                        "Lot Details:\n" .
+                        "- Name: %s\n" .
+                        "- Location: %s\n" .
+                        "- Size: %s sqm\n" .
+                        "- Price: ₱%s\n" .
+                        "Payment Plan: %s\n" .
+                        "Monthly Payment: ₱%s\n" .
+                        "Reservation Date: %s\n" .
+                        "Confirmation Date: %s",
+                        $reservation_id,
+                        $accountName,
+                        $lot['lot_name'],
+                        $lot['location'],
+                        $lot['size'],
+                        number_format($lot['price'], 2),
+                        $payment_plan['plan'],
+                        number_format($reservation['monthly_payment'], 2),
+                        date('F j, Y', strtotime($reservation['reservation_date'])),
+                        date('F j, Y g:i A')
+                    );
+                    $staffs->addStaffLog($_SESSION['account']['account_id'], 'Confirm Reservation', $logDetails);
+                }
                 
                 return true;
             }

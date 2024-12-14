@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
         $burialObj->account_id = $account_id;
 
         if($burialObj->addReservation()){
-            header('location: ../account_profile.php');
+            header('location: ../account_notification.php');
         } else {
             echo 'Something went wrong when adding reservation';
         }
