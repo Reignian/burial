@@ -1,12 +1,14 @@
 <?php
-
+session_start();
 require_once ('../../functions.php');
 require_once ('payments.class.php');
+require_once ('../staffs/staffs.class.php');
 
 $plan = $duration = $down_payment = $interest_rate = '';
 $planErr = $durationErr = $down_paymentErr = $interest_rateErr = '';
 
 $burialObj = new Payments_class();
+$staffObj = new Staffs_class();
 
 if($_SERVER['REQUEST_METHOD'] == 'POST'){
 
@@ -50,12 +52,24 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
         $burialObj->interest_rate = $interest_rate;
 
         if($burialObj->addpayment_plan()){
-            header('location: ../payments.php');
+            // Log the addition of new payment plan
+            $details = sprintf(
+                "Added new payment plan:\nPlan Name: %s\nDuration: %d months\nDown Payment: %s%%\nInterest Rate: %s%%",
+                $plan,
+                $duration,
+                $down_payment,
+                $interest_rate
+            );
+            $staffObj->addStaffLog($_SESSION['account']['account_id'], "Add Payment Plan", $details);
+            
+            header('location: ../payment_plans.php');
+            exit;
         } else {
             echo 'Something went wrong when adding new payment plan';
         }
     }
 }
+
 ?>
 
 <!DOCTYPE html>

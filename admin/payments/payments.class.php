@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../../database.php';
+require_once __DIR__ . '/../staffs/staffs.class.php';
+require_once __DIR__ . '/../reservations/reservations.class.php';
 
 class Payments_class{
 
@@ -11,11 +13,14 @@ class Payments_class{
     public $down_payment = '';
     public $interest_rate = '';
 
-
     protected $db;
+    protected $staffs;
+    protected $reservation;
 
     function __construct(){
         $this->db = new Database();
+        $this->staffs = new Staffs_class();
+        $this->reservation = new Reservation_class();
     }
     function showALL_payments(){
 
@@ -135,12 +140,48 @@ class Payments_class{
     }
 
     function deletePayment($recordID) {
-        $sql = "DELETE FROM payment WHERE payment_id = :recordID";
-    
+        // Get payment and reservation details before deletion for logging
+        $sql = "SELECT p.amount_paid, p.payment_date, p.reservation_id,
+                       CONCAT(a.first_name, ' ', a.last_name) as customer_name,
+                       l.lot_name, l.location,
+                       pp.plan as payment_plan,
+                       r.monthly_payment
+                FROM payment p
+                JOIN reservation r ON p.reservation_id = r.reservation_id
+                JOIN account a ON r.account_id = a.account_id
+                JOIN lots l ON r.lot_id = l.lot_id
+                JOIN payment_plan pp ON r.payment_plan_id = pp.payment_plan_id
+                WHERE p.payment_id = :recordID";
         $query = $this->db->connect()->prepare($sql);
         $query->bindParam(':recordID', $recordID, PDO::PARAM_INT);
-    
-        return $query->execute();
+        $query->execute();
+        $paymentDetails = $query->fetch(PDO::FETCH_ASSOC);
+
+        // Calculate balance using Reservation_class Balance function
+        $currentBalance = $this->reservation->Balance($paymentDetails['reservation_id']);
+
+        // Delete the payment
+        $sql = "DELETE FROM payment WHERE payment_id = :recordID";
+        $query = $this->db->connect()->prepare($sql);
+        $query->bindParam(':recordID', $recordID, PDO::PARAM_INT);
+        
+        if ($query->execute()) {
+            // Log the deletion with more details
+            $details = sprintf(
+                "Deleted payment record:\nCustomer: %s\nLot: %s - %s\nPayment Plan: %s\nMonthly Payment: ₱%s\nAmount Paid: ₱%s\nRemaining Balance: ₱%s\nPayment Date: %s",
+                $paymentDetails['customer_name'],
+                $paymentDetails['lot_name'],
+                $paymentDetails['location'],
+                $paymentDetails['payment_plan'],
+                number_format($paymentDetails['monthly_payment'], 2),
+                number_format($paymentDetails['amount_paid'], 2),
+                number_format($currentBalance, 2),
+                date('M d, Y', strtotime($paymentDetails['payment_date']))
+            );
+            $this->staffs->addStaffLog($_SESSION['account']['account_id'], "Deleted payment record", $details);
+            return true;
+        }
+        return false;
     }
 
 }

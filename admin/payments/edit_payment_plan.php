@@ -1,8 +1,11 @@
 <?php
+session_start();
 require_once ('../../functions.php');
 require_once ('payments.class.php');
+require_once ('../staffs/staffs.class.php');
 
 $burialObj = new Payments_class();
+$staffObj = new Staffs_class();
 
 $payment_plan_id = isset($_GET['id']) ? $_GET['id'] : null;
 $plan = $duration = $down_payment = $interest_rate = '';
@@ -52,7 +55,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if (empty($planErr) && empty($durationErr) && empty($down_paymentErr) && empty($interest_rateErr)) {
         if ($burialObj->updatePaymentPlan($payment_plan_id, $plan, $duration, $down_payment, $interest_rate)) {
-            header('location: ../payments.php');
+            // Track what fields were changed
+            $changes = [];
+            if ($paymentPlan['plan'] != $plan) {
+                $changes[] = "Plan Name: {$paymentPlan['plan']} → {$plan}";
+            }
+            if ($paymentPlan['duration'] != $duration) {
+                $changes[] = "Duration: {$paymentPlan['duration']} months → {$duration} months";
+            }
+            if ($paymentPlan['down_payment'] != $down_payment) {
+                $changes[] = "Down Payment: {$paymentPlan['down_payment']}% → {$down_payment}%";
+            }
+            if ($paymentPlan['interest_rate'] != $interest_rate) {
+                $changes[] = "Interest Rate: {$paymentPlan['interest_rate']}% → {$interest_rate}%";
+            }
+
+            if (!empty($changes)) {
+                $logDetails = sprintf(
+                    "Edited payment plan (%s):\n%s",
+                    $paymentPlan['plan'],
+                    implode("\n", $changes)
+                );
+                $staffObj->addStaffLog($_SESSION['account']['account_id'], "Edit Payment Plan", $logDetails);
+            }
+            
+            header('location: ../payment_plans.php');
             exit;
         } else {
             echo 'Something went wrong when updating the payment plan';

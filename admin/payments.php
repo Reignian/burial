@@ -27,7 +27,9 @@
                         <th>Amount</th>
                         <th>Remaining Balance</th>
                         <th>Date</th>
+                        <?php if($_SESSION['account']['is_admin']): ?>
                         <th>Action</th>
+                        <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
@@ -43,6 +45,7 @@
                         <td>₱<?= number_format($payarr['amount_paid'], 2) ?></td>
                         <td>₱<?= number_format($remaining_balance, 2) ?></td>
                         <td><?= date('M d, Y', strtotime($payarr['payment_date'])) ?></td>
+                        <?php if($_SESSION['account']['is_admin']): ?>
                         <td>
                             <div class="d-flex gap-1 justify-content-center">
                                 <button class="btn btn-sm btn-danger deleteBtn d-flex align-items-center" 
@@ -51,6 +54,7 @@
                                 </button>
                             </div>
                         </td>
+                        <?php endif; ?>
                     </tr>
                     <?php } ?>
                 </tbody>

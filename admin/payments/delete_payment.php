@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once ('payments.class.php');
 
 $burialObj = new Payments_class();
@@ -14,3 +15,4 @@ if (isset($_GET['id'])) {
 } else {
     echo 'error';
 }
+?>

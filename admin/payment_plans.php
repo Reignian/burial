@@ -23,7 +23,9 @@
                         <th>Duration (Months)</th>
                         <th>Down Payment</th>
                         <th>Interest Rate</th>
+                        <?php if($_SESSION['account']['is_admin']): ?>
                         <th>Action</th>
+                        <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
@@ -33,6 +35,7 @@
                         <td><?= $plan['duration'] ?></td>
                         <td><?= $plan['down_payment'] ?>%</td>
                         <td><?= $plan['interest_rate'] ?>%</td>
+                        <?php if($_SESSION['account']['is_admin']): ?>
                         <td>
                             <div class="d-flex gap-1 justify-content-center">
                                 <a href="payments/edit_payment_plan.php?id=<?= $plan['payment_plan_id'] ?>" 
@@ -45,6 +48,7 @@
                                 </button>
                             </div>
                         </td>
+                        <?php endif; ?>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -72,11 +76,13 @@ $(document).ready(function() {
         }
     });
 
+    <?php if($_SESSION['account']['is_admin']): ?>
     $('.add-plan-button').html(`
         <button type="button" class="btn btn-primary" onclick="window.location.href='payments/add_payment_plan.php'">
             <i class="fas fa-plus-circle me-1"></i> Add Plan
         </button>
     `);
+    <?php endif; ?>
 
     let deletePlanButtons = document.querySelectorAll('.deletePlanBtn');
     deletePlanButtons.forEach(button => {
@@ -268,4 +274,4 @@ function handleDeletePlanClick(e) {
 .table td:nth-child(2) {
     text-align: center !important;
 }
-</style> 
+</style>
