@@ -19,7 +19,6 @@
         echo "<script>window.location.href = 'reservations.php';</script>";
     }
 ?>
-
 <!-- Add DataTables CSS after Bootstrap CSS -->
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
 
@@ -87,6 +86,10 @@
                                                 <a href="reservations/add_payment.php?reservation_id=<?= $resarr['reservation_id'] ?>&name=<?= urlencode($accountname) ?>&lot=<?= urlencode($account_lot) ?>" 
                                                    class="btn btn-sm btn-primary d-flex align-items-center">
                                                     <i class="fas fa-plus-circle me-1"></i> Payment
+                                                </a>
+                                                <a href="reservations/transfer_reservation.php?reservation_id=<?= $resarr['reservation_id'] ?>&name=<?= urlencode($accountname) ?>&lot=<?= urlencode($account_lot) ?>" 
+                                                   class="btn btn-sm btn-info d-flex align-items-center text-white">
+                                                    <i class="fas fa-exchange-alt me-1"></i> Transfer
                                                 </a>
                                             <?php else: ?>
                                                 <a href="" class="btn btn-sm btn-info d-flex align-items-center">

@@ -20,7 +20,7 @@
 
         <div class="card">
             <div class="card-body">
-                <table id="lotsTable" class="table">
+                <table id="lotsTable" class="table table-hover">
                     <thead>
                         <tr>
                             <th>No.</th>

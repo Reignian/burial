@@ -45,7 +45,7 @@
 
         <div class="card">
             <div class="card-body">
-                <table id="staffTable" class="table">
+                <table id="staffTable" class="table table-hover">
                     <thead>
                         <tr>
                             <th>No.</th>
@@ -288,10 +288,6 @@ $(document).ready(function() {
 /* Zebra Striping */
 .table tbody tr:nth-of-type(odd) {
     background-color: #f5fcfd !important;
-}
-
-.table tbody tr:hover {
-    background-color: #e0f7fa !important;
 }
 
 /* Status Badge Styling */

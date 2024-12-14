@@ -400,4 +400,63 @@ class Reservation_class{
             return false;
         }
     }
+
+    public function transferReservation($reservationId, $newAccountId) {
+        $this->db->connect()->beginTransaction();
+        
+        try {
+            // Get current reservation details
+            $sql = "SELECT account_id, lot_id, balance, monthly_payment, payment_plan_id, reservation_date 
+                   FROM reservation 
+                   WHERE reservation_id = :reservation_id";
+            $query = $this->db->connect()->prepare($sql);
+            $query->bindParam(':reservation_id', $reservationId);
+            $query->execute();
+            $currentReservation = $query->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$currentReservation) {
+                throw new Exception("Reservation not found.");
+            }
+
+            // Update the reservation with new account
+            $sqlUpdate = "UPDATE reservation 
+                         SET account_id = :new_account_id 
+                         WHERE reservation_id = :reservation_id";
+            $queryUpdate = $this->db->connect()->prepare($sqlUpdate);
+            $queryUpdate->bindParam(':new_account_id', $newAccountId);
+            $queryUpdate->bindParam(':reservation_id', $reservationId);
+            
+            if (!$queryUpdate->execute()) {
+                throw new Exception("Failed to transfer reservation.");
+            }
+
+            // Create notifications for both old and new account holders
+            $notificationObj = new Notification();
+            $lotName = $this->account_lot($reservationId);
+            
+            // Notify previous owner
+            $title = "Reservation Transferred";
+            $message = "Your reservation for lot " . $lotName . " has been transferred to another account.";
+            $notificationObj->createNotification($currentReservation['account_id'], 'reservation_status', $title, $message, $reservationId);
+            
+            // Notify new owner
+            $title = "New Reservation Received";
+            $message = "A reservation for lot " . $lotName . " has been transferred to your account.";
+            $notificationObj->createNotification($newAccountId, 'reservation_status', $title, $message, $reservationId);
+
+            $this->db->connect()->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->db->connect()->rollBack();
+            return $e->getMessage();
+        }
+    }
+
+    public function getReservationById($reservationId) {
+        $sql = "SELECT * FROM reservation WHERE reservation_id = :reservation_id";
+        $query = $this->db->connect()->prepare($sql);
+        $query->bindParam(':reservation_id', $reservationId);
+        $query->execute();
+        return $query->fetch(PDO::FETCH_ASSOC);
+    }
 }

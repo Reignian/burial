@@ -19,7 +19,7 @@
 
     <div class="card">
         <div class="card-body">
-            <table id="paymentsTable" class="table">
+            <table id="paymentsTable" class="table table-hover">
                 <thead>
                     <tr>
                         <th>Name</th>

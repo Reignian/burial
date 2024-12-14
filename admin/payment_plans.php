@@ -16,7 +16,7 @@
 
     <div class="card">
         <div class="card-body">
-            <table id="paymentPlansTable" class="table">
+            <table id="paymentPlansTable" class="table table-hover">
                 <thead>
                     <tr>
                         <th>Plan</th>

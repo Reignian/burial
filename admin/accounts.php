@@ -26,7 +26,7 @@
 
         <div class="card">
             <div class="card-body">
-                <table id="accountsTable" class="table">
+                <table id="accountsTable" class="table table-hover">
                     <thead>
                         <tr>
                             <th>No.</th>
