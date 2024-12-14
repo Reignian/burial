@@ -3,6 +3,7 @@
     require_once __DIR__ . '/reservations/reservations.class.php';
     
     $burialObj = new Reservation_class();
+    $payment_plans = $burialObj->getPaymentPlans();
 
     $resarray = $burialObj->showALL_reservation();
 
@@ -98,10 +99,62 @@
                                             <?php endif; ?>
                                             
                                             <?php if (!$hasPayments): ?>
-                                                <a href="reservations/edit_reservation.php?id=<?= $resarr['reservation_id'] ?>" 
-                                                   class="btn btn-sm btn-warning d-flex align-items-center">
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-warning d-flex align-items-center"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#editModal<?= $resarr['reservation_id'] ?>">
                                                     <i class="fas fa-edit me-1"></i> Edit
-                                                </a>
+                                                </button>
+
+                                                <!-- Edit Modal -->
+                                                <div class="modal fade" id="editModal<?= $resarr['reservation_id'] ?>" tabindex="-1" aria-hidden="true">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title">Edit Reservation</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <form action="reservations/process_edit.php" method="POST">
+                                                                <div class="modal-body">
+                                                                    <input type="hidden" name="reservation_id" value="<?= $resarr['reservation_id'] ?>">
+                                                                    
+                                                                    <div class="mb-3">
+                                                                        <label for="reservation_date<?= $resarr['reservation_id'] ?>" class="form-label">Reservation Date</label>
+                                                                        <input type="date" 
+                                                                               class="form-control" 
+                                                                               id="reservation_date<?= $resarr['reservation_id'] ?>" 
+                                                                               name="reservation_date"
+                                                                               value="<?= date('Y-m-d', strtotime($resarr['reservation_date'])) ?>"
+                                                                               required>
+                                                                    </div>
+
+                                                                    <div class="mb-3">
+                                                                        <label for="payment_plan<?= $resarr['reservation_id'] ?>" class="form-label">Payment Plan</label>
+                                                                        <select class="form-select" 
+                                                                                id="payment_plan<?= $resarr['reservation_id'] ?>" 
+                                                                                name="payment_plan_id" 
+                                                                                required>
+                                                                            <?php foreach ($payment_plans as $plan): ?>
+                                                                                <option value="<?= $plan['payment_plan_id'] ?>" 
+                                                                                        <?= $resarr['payment_plan_id'] == $plan['payment_plan_id'] ? 'selected' : '' ?>>
+                                                                                    <?= $plan['plan'] ?> 
+                                                                                    <?php if ($plan['duration'] > 0): ?>
+                                                                                        (<?= $plan['down_payment'] ?>% DP, 
+                                                                                        <?= $plan['interest_rate'] ?>% interest)
+                                                                                    <?php endif; ?>
+                                                                                </option>
+                                                                            <?php endforeach; ?>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             <?php endif; ?>
                                             
                                             <?php if ($resarr['request'] !== 'Cancelled'): ?>

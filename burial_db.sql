@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 13, 2024 at 09:23 PM
+-- Generation Time: Dec 14, 2024 at 05:25 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -138,7 +138,12 @@ CREATE TABLE `account` (
 
 INSERT INTO `account` (`account_id`, `username`, `password`, `first_name`, `middle_name`, `last_name`, `email`, `phone_number`, `created_at`, `is_customer`, `is_staff`, `is_admin`, `is_banned`, `reset_token`, `reset_token_expiry`) VALUES
 (8, 'admin', '$2y$10$N0qDeYTcgKNeSHCIqFb/cupIQPBV5g2SNtDVb7FlT1EfqVNYdk6C2', 'admin', '', 'admin', 'admin@gmail.com', '09991234567', '2024-10-12 14:11:57', 0, 0, 1, 0, NULL, NULL),
-(9, 'reign', '$2y$10$cliEw.S4Tq7vLAU0n/TjhusXoNyW6ZLVNe//K7wWK53jWYTLKqqv6', 'Reign Ian', 'Carreon', 'Magno', 'reign@gmail.com', '09123456789', '2024-10-12 14:16:13', 1, 0, 0, 0, NULL, NULL);
+(9, 'reign', '$2y$10$cliEw.S4Tq7vLAU0n/TjhusXoNyW6ZLVNe//K7wWK53jWYTLKqqv6', 'Reign Ian', 'Carreon', 'Magno', 'reign@gmail.com', '09123456789', '2024-10-12 14:16:13', 1, 0, 0, 0, NULL, NULL),
+(12, 'staff', '$2y$10$vcHUVbLyqVKgkUcTHpa.jurg9AOmE5zGzFrNfKFkxMslXDnUlGmC.', 'staff', 'staff', 'staff', 'moonarcheye@gmail.com', '09752441070', '2024-12-13 20:51:55', 0, 1, 0, 0, NULL, NULL),
+(13, 'staff2', '$2y$10$6DsqfnmpIPt9q6/5Nbfn9eTiBaTlUoXRulY36qorKaxQCM7w3/p5W', 'staff2', 'staff2', 'staff2', 'moonarcheye@gmail.com', '09752441070', '2024-12-13 21:15:13', 0, 1, 0, 0, NULL, NULL),
+(14, 'staff22', '$2y$10$8wFUkXwDvnBh6hyvKhwHH.RytIjDizuld1Vms2Kr.Z2rVTrusNlpK', 'staff2', 'staff2', 'staff2', 'moonarcheye@gmail.com', '09123456789', '2024-12-13 21:37:42', 0, 1, 0, 0, NULL, NULL),
+(15, 'jamal', '$2y$10$GEQscVOa6QgppRKwJy6YNOsqlB067r3bGgpeUEOEG3QmuJKdbGRsG', 'jamal', 'al', 'badi', 'jamalalbadi03@gmail.com', '09752441070', '2024-12-14 09:15:55', 1, 0, 0, 0, NULL, NULL),
+(18, 'haha', '$2y$10$4qYksx5yXEtKKuqg4uaOR.dIBrDkm0iD4ucBCYiEtSxnhx7mADL26', 'haha', 'haha', 'haha', 'reignianc.magno@gmail.com', '09752441070', '2024-12-14 09:39:48', 1, 0, 0, 0, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -183,7 +188,7 @@ CREATE TABLE `lots` (
 --
 
 INSERT INTO `lots` (`lot_id`, `lot_name`, `location`, `size`, `price`, `lot_image`, `status`, `description`, `created_at`) VALUES
-(20, 'lot 1', 'block 1', '25', 1000.00, 'lots_images/lot.jpg', 'Available', 'a', '2024-12-12 20:06:03');
+(20, 'lot 1', 'block 1', '25', 1000.00, 'lots_images/lot.jpg', 'Reserved', 'a', '2024-12-12 20:06:03');
 
 -- --------------------------------------------------------
 
@@ -201,6 +206,13 @@ CREATE TABLE `notifications` (
   `is_read` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `notifications`
+--
+
+INSERT INTO `notifications` (`notification_id`, `account_id`, `type`, `title`, `message`, `reference_id`, `is_read`, `created_at`) VALUES
+(144, 15, 'payment_missed', 'Missed Payment Due', 'A penalty of ₱0.76 has been applied to your balance due to late payment.', 86, 0, '2024-12-14 16:25:07');
 
 -- --------------------------------------------------------
 
@@ -253,6 +265,14 @@ CREATE TABLE `penalty_log` (
   `penalty_amount` decimal(10,2) NOT NULL,
   `penalty_date` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `penalty_log`
+--
+
+INSERT INTO `penalty_log` (`penalty_id`, `reservation_id`, `penalty_amount`, `penalty_date`) VALUES
+(73, 86, 0.76, '2024-12-14 00:00:00'),
+(74, 86, 0.76, '2024-12-14 00:00:00');
 
 -- --------------------------------------------------------
 
@@ -316,6 +336,27 @@ CREATE TABLE `reservation` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `last_penalty_month` date DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `reservation`
+--
+
+INSERT INTO `reservation` (`reservation_id`, `account_id`, `lot_id`, `reservation_date`, `payment_plan_id`, `monthly_payment`, `balance`, `request`, `created_at`, `updated_at`, `last_penalty_month`) VALUES
+(86, 15, 20, '2024-12-14', 4, 25.36, 1218.92, 'Confirmed', '2024-12-14 09:04:38', '2024-12-14 16:25:07', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `staff_logs`
+--
+
+CREATE TABLE `staff_logs` (
+  `log_id` int(11) NOT NULL,
+  `staff_id` int(11) NOT NULL,
+  `action` varchar(100) NOT NULL,
+  `details` text DEFAULT NULL,
+  `log_date` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -413,6 +454,13 @@ ALTER TABLE `reservation`
   ADD KEY `fk_payment_plan_id` (`payment_plan_id`);
 
 --
+-- Indexes for table `staff_logs`
+--
+ALTER TABLE `staff_logs`
+  ADD PRIMARY KEY (`log_id`),
+  ADD KEY `staff_id` (`staff_id`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -444,7 +492,7 @@ ALTER TABLE `about_team`
 -- AUTO_INCREMENT for table `account`
 --
 ALTER TABLE `account`
-  MODIFY `account_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `account_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `contact`
@@ -462,13 +510,13 @@ ALTER TABLE `lots`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=113;
+  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=145;
 
 --
 -- AUTO_INCREMENT for table `payment`
 --
 ALTER TABLE `payment`
-  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=109;
+  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=113;
 
 --
 -- AUTO_INCREMENT for table `payment_plan`
@@ -480,7 +528,7 @@ ALTER TABLE `payment_plan`
 -- AUTO_INCREMENT for table `penalty_log`
 --
 ALTER TABLE `penalty_log`
-  MODIFY `penalty_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
+  MODIFY `penalty_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
 
 --
 -- AUTO_INCREMENT for table `pubmat_1`
@@ -498,7 +546,13 @@ ALTER TABLE `pubmat_2`
 -- AUTO_INCREMENT for table `reservation`
 --
 ALTER TABLE `reservation`
-  MODIFY `reservation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=86;
+  MODIFY `reservation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=87;
+
+--
+-- AUTO_INCREMENT for table `staff_logs`
+--
+ALTER TABLE `staff_logs`
+  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Constraints for dumped tables
@@ -529,6 +583,12 @@ ALTER TABLE `reservation`
   ADD CONSTRAINT `fk_account_id` FOREIGN KEY (`account_id`) REFERENCES `account` (`account_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   ADD CONSTRAINT `fk_lot_id` FOREIGN KEY (`lot_id`) REFERENCES `lots` (`lot_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   ADD CONSTRAINT `fk_payment_plan_id` FOREIGN KEY (`payment_plan_id`) REFERENCES `payment_plan` (`payment_plan_id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+--
+-- Constraints for table `staff_logs`
+--
+ALTER TABLE `staff_logs`
+  ADD CONSTRAINT `staff_logs_ibfk_1` FOREIGN KEY (`staff_id`) REFERENCES `account` (`account_id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

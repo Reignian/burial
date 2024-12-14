@@ -57,4 +57,28 @@ class Staffs_class {
         
         return $query->execute();
     }
+
+    function addStaffLog($staff_id, $action, $details = '') {
+        $sql = "INSERT INTO staff_logs (staff_id, action, details, log_date) VALUES (:staff_id, :action, :details, NOW())";
+        $query = $this->db->connect()->prepare($sql);
+        $query->bindParam(':staff_id', $staff_id, PDO::PARAM_INT);
+        $query->bindParam(':action', $action, PDO::PARAM_STR);
+        $query->bindParam(':details', $details, PDO::PARAM_STR);
+        return $query->execute();
+    }
+
+    function getStaffLogs() {
+        $sql = "SELECT sl.*, CONCAT(a.last_name, ', ', a.first_name, ' ', a.middle_name) AS staff_name
+                FROM staff_logs sl 
+                JOIN account a ON sl.staff_id = a.account_id 
+                ORDER BY sl.log_date DESC";
+        $query = $this->db->connect()->prepare($sql);
+        $data = null;
+
+        if($query->execute()) {
+            $data = $query->fetchAll();
+        }
+
+        return $data;
+    }
 }

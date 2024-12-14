@@ -27,7 +27,7 @@ $currentAccountId = $currentReservation['account_id'] ?? null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['transfer_reservation'])) {
         $newAccountId = $_POST['new_account_id'];
-        $result = $burialObj->transferReservation($_POST['reservation_id'], $newAccountId);
+        $result = $burialObj->transferReservation($_POST['reservation_id'], $newAccountId, false);
         
         if ($result === true) {
             echo "<script>
@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newAccountId = $accountObj->createAccount();
             if ($newAccountId) {
                 // Transfer the reservation to the new account
-                $result = $burialObj->transferReservation($_POST['reservation_id'], $newAccountId);
+                $result = $burialObj->transferReservation($_POST['reservation_id'], $newAccountId, true);
                 if ($result === true) {
                     echo "<script>
                             alert('Account created and reservation transferred successfully.');
