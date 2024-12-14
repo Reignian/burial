@@ -1,17 +1,8 @@
 <?php
-
-    include(__DIR__ . '/nav/navigation.php');
     require_once (__DIR__ . '/accounts/accounts.class.php');
     $burialObj = new Accounts_class();
-
     $cusarray = $burialObj->showALL_account();
-
-    if (isset($_POST['toggle_ban'])) {
-        $account_id = $_POST['account_id'];
-        $burialObj->toggleBanStatus($account_id);
-        header("Location: accounts.php");
-        exit();
-    }
+    include(__DIR__ . '/nav/navigation.php');
 ?>
 
 <!-- Add DataTables CSS after Bootstrap CSS -->
@@ -53,14 +44,22 @@
                                 </span>
                             </td>
                             <td class="text-center">
-                                <form method="POST" style="display: inline;">
-                                    <input type="hidden" name="account_id" value="<?= $cusarr['account_id'] ?>">
-                                    <button type="submit" name="toggle_ban" 
-                                            class="btn btn-sm <?= $cusarr['status'] == 'Banned' ? 'btn-success' : 'btn-danger' ?> d-flex align-items-center mx-auto">
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <button type="button" 
+                                            onclick="askReason('ban', <?= $cusarr['account_id'] ?>, '<?= $cusarr['status'] == 'Banned' ? 'unban' : 'ban' ?>')"
+                                            class="btn btn-sm <?= $cusarr['status'] == 'Banned' ? 'btn-success' : 'btn-danger' ?> d-flex align-items-center">
                                         <i class="fas <?= $cusarr['status'] == 'Banned' ? 'fa-user-check' : 'fa-user-slash' ?> me-1"></i>
                                         <?= $cusarr['status'] == 'Banned' ? 'Unban' : 'Ban' ?>
                                     </button>
-                                </form>
+                                    <?php if($_SESSION['account']['is_admin']): ?>
+                                    <button type="button"
+                                            onclick="askReason('delete', <?= $cusarr['account_id'] ?>)"
+                                            class="btn btn-sm btn-outline-danger d-flex align-items-center">
+                                        <i class="fas fa-trash-alt me-1"></i>
+                                        Delete
+                                    </button>
+                                    <?php endif; ?>
+                                </div>
                             </td>
                         </tr>
                         <?php
@@ -72,6 +71,36 @@
             </div>
         </div>
     </section>
+</div>
+
+<!-- Reason Modal -->
+<div class="modal fade" id="reasonModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="reasonModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reasonModalLabel">Enter Reason</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reasonForm" method="POST">
+                    <input type="hidden" id="actionType" name="action_type">
+                    <input type="hidden" id="accountId" name="account_id">
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Please provide a reason:</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3" required></textarea>
+                    </div>
+                    <div id="deleteWarning" class="alert alert-warning d-none">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Warning: This action cannot be undone. Are you sure you want to proceed?
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitReason()">Proceed</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Add DataTables JS -->
@@ -92,6 +121,63 @@ $(document).ready(function() {
             lengthMenu: "Show _MENU_ entries"
         }
     });
+});
+
+let currentModal;
+
+function askReason(action, accountId, actionSubtype = '') {
+    const modal = new bootstrap.Modal(document.getElementById('reasonModal'), {
+        backdrop: 'static',
+        keyboard: false
+    });
+    const form = document.getElementById('reasonForm');
+    const actionTypeInput = document.getElementById('actionType');
+    const accountIdInput = document.getElementById('accountId');
+    const modalTitle = document.getElementById('reasonModalLabel');
+    const deleteWarning = document.getElementById('deleteWarning');
+    const submitButton = document.querySelector('#reasonModal .btn-primary');
+
+    // Set the form action based on the action type
+    if (action === 'ban') {
+        form.action = 'accounts/toggle_ban.php';
+        modalTitle.textContent = `Enter Reason to ${actionSubtype.charAt(0).toUpperCase() + actionSubtype.slice(1)} Account`;
+        deleteWarning.classList.add('d-none');
+        submitButton.textContent = 'Proceed';
+    } else {
+        form.action = 'accounts/delete_account.php';
+        modalTitle.textContent = 'Enter Reason to Delete Account';
+        deleteWarning.classList.remove('d-none');
+        submitButton.textContent = 'Delete Account';
+        submitButton.classList.remove('btn-primary');
+        submitButton.classList.add('btn-danger');
+    }
+
+    actionTypeInput.value = action;
+    accountIdInput.value = accountId;
+    currentModal = modal;
+    modal.show();
+}
+
+function submitReason() {
+    const form = document.getElementById('reasonForm');
+    const reason = document.getElementById('reason').value.trim();
+    
+    if (!reason) {
+        alert('Please provide a reason.');
+        return;
+    }
+
+    // Submit the form
+    form.submit();
+}
+
+// Reset modal state when it's closed
+document.getElementById('reasonModal').addEventListener('hidden.bs.modal', function () {
+    const submitButton = document.querySelector('#reasonModal .btn-primary');
+    submitButton.classList.remove('btn-danger');
+    submitButton.classList.add('btn-primary');
+    submitButton.textContent = 'Proceed';
+    document.getElementById('reason').value = '';
 });
 </script>
 

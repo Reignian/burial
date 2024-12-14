@@ -1,8 +1,9 @@
 <?php
 
 require_once __DIR__ . '/../../database.php';
+require_once __DIR__ . '/../staffs/staffs.class.php';
 
-class Accounts_class{
+class Accounts_class {
     public $first_name = '';
     public $middle_name = '';
     public $last_name = '';
@@ -11,13 +12,15 @@ class Accounts_class{
     public $email = '';
     public $phone_number = '';
     protected $db;
+    protected $staffs;
 
     function __construct(){
         $this->db = new Database();
+        $this->staffs = new Staffs_class();
     }
 
     function showALL_account(){
-        $sql = "SELECT *, CASE WHEN is_banned = 1 THEN 'Banned' ELSE 'Active' END as status FROM account WHERE (is_customer = 1 AND is_admin = 0);";
+        $sql = "SELECT *, CASE WHEN is_banned = 1 THEN 'Banned' ELSE 'Active' END as status FROM account WHERE (is_customer = 1 AND is_admin = 0 AND is_deleted = 0) ORDER BY created_at DESC;";
         $query = $this->db->connect()->prepare($sql);
         $data = null;
 
@@ -28,11 +31,26 @@ class Accounts_class{
         return $data;
     }
 
-    function toggleBanStatus($account_id) {
+    function toggleBanStatus($account_id, $reason) {
         $sql = "UPDATE account SET is_banned = NOT is_banned WHERE account_id = :account_id";
         $query = $this->db->connect()->prepare($sql);
         $query->bindParam(':account_id', $account_id, PDO::PARAM_INT);
-        return $query->execute();
+        if ($query->execute()) {
+            // Get the updated status
+            $statusSql = "SELECT is_banned, CONCAT(first_name, ' ', last_name) as full_name FROM account WHERE account_id = :account_id";
+            $statusQuery = $this->db->connect()->prepare($statusSql);
+            $statusQuery->bindParam(':account_id', $account_id, PDO::PARAM_INT);
+            $statusQuery->execute();
+            $result = $statusQuery->fetch();
+            
+            $action = $result['is_banned'] ? "Banned customer account" : "Unbanned customer account";
+            $details = "Customer: " . $result['full_name'] . "\nReason: " . $reason;
+            
+            // Log the action
+            $this->staffs->addStaffLog($_SESSION['account']['account_id'], $action, $details);
+            return true;
+        }
+        return false;
     }
 
     function createAccount(){
@@ -49,6 +67,36 @@ class Accounts_class{
         
         if ($query->execute()) {
             return $this->db->connect()->lastInsertId();
+        }
+        return false;
+    }
+
+    function hasActiveReservations($account_id) {
+        $sql = "SELECT COUNT(*) as count FROM reservation WHERE account_id = ? AND request = 'Confirmed'";
+        $query = $this->db->connect()->prepare($sql);
+        $query->execute([$account_id]);
+        $result = $query->fetch();
+        return $result['count'] > 0;
+    }
+
+    function deleteAccount($account_id, $reason) {
+        if ($this->hasActiveReservations($account_id)) {
+            return false;
+        }
+        
+        // Get account details before deletion for logging
+        $detailsSql = "SELECT CONCAT(first_name, ' ', last_name) as full_name FROM account WHERE account_id = ?";
+        $detailsQuery = $this->db->connect()->prepare($detailsSql);
+        $detailsQuery->execute([$account_id]);
+        $accountDetails = $detailsQuery->fetch();
+
+        $sql = "UPDATE account SET is_deleted = 1 WHERE account_id = ?";
+        $query = $this->db->connect()->prepare($sql);
+        if ($query->execute([$account_id])) {
+            // Log the deletion with reason
+            $details = "Deleted customer account: " . $accountDetails['full_name'] . "\nReason: " . $reason;
+            $this->staffs->addStaffLog($_SESSION['account']['account_id'], "Deleted customer account", $details);
+            return true;
         }
         return false;
     }
