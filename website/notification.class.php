@@ -134,17 +134,6 @@ class Notification {
                         $penalty_amount, 
                         $next_payment_date
                     );
-                    
-                    if ($penalty_applied) {
-                        // Create penalty notification
-                        $this->createNotification(
-                            $payment['account_id'],
-                            'payment_missed',
-                            'Missed Payment Due',
-                            "A penalty of ₱" . number_format($penalty_amount, 2) . " has been applied to your balance due to late payment.",
-                            $payment['reservation_id']
-                        );
-                    }
                 }
             }
 
@@ -203,32 +192,6 @@ class Notification {
                             $payment['reservation_id']
                         );
                     }
-                }
-            }
-            // For missed payments notification
-            elseif ($next_payment_date < $today) {
-                // Check if we already sent a missed payment notification for this month
-                $sql = "SELECT COUNT(*) FROM notifications 
-                        WHERE account_id = :account_id 
-                        AND reference_id = :reservation_id 
-                        AND type = 'payment_missed'
-                        AND DATE_FORMAT(created_at, '%Y-%m') = :current_month";
-                
-                $query = $this->db->connect()->prepare($sql);
-                $query->bindParam(':account_id', $payment['account_id']);
-                $query->bindParam(':reservation_id', $payment['reservation_id']);
-                $query->bindParam(':current_month', $dueMonth);
-                $query->execute();
-                
-                if ($query->fetchColumn() == 0) {
-                    $this->createNotification(
-                        $payment['account_id'],
-                        'payment_missed',
-                        'Missed Payment',
-                        "You have missed a payment of ₱" . number_format($payment['monthly_payment'], 2) . 
-                        " that was due on " . $next_payment_date->format('F j, Y'),
-                        $payment['reservation_id']
-                    );
                 }
             }
         }

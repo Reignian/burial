@@ -98,4 +98,23 @@ function initializeChecks() {
 }
 
 // Initialize when the page loads
-document.addEventListener('DOMContentLoaded', initializeChecks);
+document.addEventListener('DOMContentLoaded', function() {
+    initializeChecks();
+    
+    // Get all lot cards
+    const lotCards = document.querySelectorAll('.lot-card');
+    
+    // Add click event listener to each card
+    lotCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            // Get the parent anchor tag
+            const link = this.closest('a');
+            if (link) {
+                // Get the reservation ID from the href
+                const href = link.getAttribute('href');
+                // Navigate to the transactions page
+                window.location.href = href;
+            }
+        });
+    });
+});
