@@ -1,129 +1,65 @@
 <?php
-    include(__DIR__ . '/nav/navigation.php');
-    require_once (__DIR__ . '/generate_report/report.class.php');
+// Include navigation first since it handles session and authentication
+include(__DIR__ . '/nav/navigation.php');
+require_once (__DIR__ . '/generate_report/report.class.php');
 
-    $reportObj = new Report_class();
+$reportObj = new Report_class();
 
-    // Get filter parameters
-    $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : null;
-    $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : null;
-    $reportType = isset($_GET['report_type']) ? $_GET['report_type'] : 'revenue';
+// Get filter parameters with validation
+$startDate = filter_input(INPUT_GET, 'start_date') ?: null;
+$endDate = filter_input(INPUT_GET, 'end_date') ?: null;
+$reportType = filter_input(INPUT_GET, 'report_type') ?: 'revenue';
 
-    // Process Excel export
-    if(isset($_POST['export_excel'])) {
-        require '../vendor/autoload.php';
-        
-        $spreadsheet = new PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        
-        // Set column headers
-        $headers = [];
-        if ($reportType == 'revenue') {
-            $headers = ['Payment Date', 'Client Name', 'Lot Details', 'Payment Plan', 'Amount Paid'];
-            
-            // Add summary at the top
-            $sheet->setCellValue('A1', 'Total Revenue:');
-            $sheet->setCellValue('B1', '₱' . number_format($summary['total_revenue'], 2));
-            $sheet->setCellValue('A2', 'Outstanding Balance:');
-            $sheet->setCellValue('B2', '₱' . number_format($summary['total_balance'], 2));
-            $sheet->setCellValue('A3', 'Fully Paid:');
-            $sheet->setCellValue('B3', $summary['fully_paid']);
-            $sheet->setCellValue('A4', 'Pending Payment:');
-            $sheet->setCellValue('B4', $summary['pending_payment']);
-            
-            // Style the summary section
-            $sheet->getStyle('A1:B4')->getFont()->setBold(true);
-            
-            // Add a blank row after summary
-            $startRow = 6;
-        } elseif ($reportType == 'lot_status') {
-            $headers = ['Lot Details', 'Status', 'Reserved By', 'Reservation Date', 'Balance'];
-            $startRow = 1;
-        } elseif ($reportType == 'payment_status') {
-            $headers = ['Client Name', 'Lot Details', 'Reservation Date', 'Payment Plan', 'Monthly Payment', 'Balance', 'Status'];
-            $startRow = 1;
-        } elseif ($reportType == 'penalty') {
-            $headers = ['Client Name', 'Lot Details', 'Reservation Date', 'Payment Plan', 'Number of Penalties', 'Total Penalty Amount', 'Penalty Dates'];
-            $startRow = 1;
-        }
-        
-        // Set headers
-        foreach(range(0, count($headers) - 1) as $i) {
-            $sheet->setCellValueByColumnAndRow($i + 1, $startRow, $headers[$i]);
-        }
-        $sheet->getStyle($startRow)->getFont()->setBold(true);
-        
-        // Add data
-        $row = $startRow + 1;
-        foreach($reportData as $item) {
-            if ($reportType == 'revenue') {
-                $sheet->setCellValue('A'.$row, date('M d, Y', strtotime($item['payment_date'])));
-                $sheet->setCellValue('B'.$row, $item['client_name']);
-                $sheet->setCellValue('C'.$row, $item['lot_details']);
-                $sheet->setCellValue('D'.$row, $item['payment_plan']);
-                $sheet->setCellValue('E'.$row, '₱' . number_format($item['amount_paid'], 2));
-            } elseif ($reportType == 'lot_status') {
-                $sheet->setCellValue('A'.$row, $item['lot_details']);
-                $sheet->setCellValue('B'.$row, $item['status']);
-                $sheet->setCellValue('C'.$row, $item['reserved_by'] ?? 'N/A');
-                $sheet->setCellValue('D'.$row, $item['reservation_date'] ? date('M d, Y', strtotime($item['reservation_date'])) : 'N/A');
-                $sheet->setCellValue('E'.$row, $item['balance'] ? '₱' . number_format($item['balance'], 2) : 'N/A');
-            } elseif ($reportType == 'payment_status') {
-                $sheet->setCellValue('A'.$row, $item['client_name']);
-                $sheet->setCellValue('B'.$row, $item['lot_details']);
-                $sheet->setCellValue('C'.$row, date('M d, Y', strtotime($item['reservation_date'])));
-                $sheet->setCellValue('D'.$row, $item['payment_plan']);
-                $sheet->setCellValue('E'.$row, '₱' . number_format($item['monthly_payment'], 2));
-                $sheet->setCellValue('F'.$row, '₱' . number_format($item['balance'], 2));
-                $sheet->setCellValue('G'.$row, $item['payment_status']);
-            } elseif ($reportType == 'penalty') {
-                $sheet->setCellValue('A'.$row, $item['client_name']);
-                $sheet->setCellValue('B'.$row, $item['lot_details']);
-                $sheet->setCellValue('C'.$row, date('M d, Y', strtotime($item['reservation_date'])));
-                $sheet->setCellValue('D'.$row, $item['payment_plan']);
-                $sheet->setCellValue('E'.$row, $item['penalty_count']);
-                $sheet->setCellValue('F'.$row, '₱' . number_format($item['total_penalty_amount'], 2));
-                $sheet->setCellValue('G'.$row, $item['penalty_dates']);
-            }
-            $row++;
-        }
-        
-        // Auto-size columns
-        foreach(range('A', $sheet->getHighestColumn()) as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
-        }
-        
-        // Create Excel file
-        $writer = new PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        
-        // Set headers for download
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="report.xlsx"');
-        header('Cache-Control: max-age=0');
-        
-        ob_end_clean(); // Clean any output buffering
-        $writer->save('php://output');
-        exit;
-    }
+// Validate date range if provided
+if ($startDate && $endDate && strtotime($startDate) > strtotime($endDate)) {
+    echo "<div class='alert alert-danger'>Start date cannot be later than end date.</div>";
+    $startDate = $endDate = null;
+}
 
-    // Get report data based on type
-    $reportData = [];
-    $summary = [];
-    switch ($reportType) {
-        case 'revenue':
-            $reportData = $reportObj->generateRevenueReport($startDate, $endDate);
-            $summary = $reportObj->getReportSummary($startDate, $endDate);
-            break;
-        case 'lot_status':
-            $reportData = $reportObj->generateLotStatusReport();
-            break;
-        case 'payment_status':
-            $reportData = $reportObj->generatePaymentStatusReport();
-            break;
-        case 'penalty':
-            $reportData = $reportObj->generatePenaltyReport();
-            break;
-    }
+// Get report data based on type
+$reportData = [];
+$summary = [];
+switch ($reportType) {
+    case 'revenue':
+        $reportData = $reportObj->generateRevenueReport($startDate, $endDate);
+        $summary = $reportObj->getReportSummary($startDate, $endDate);
+        break;
+    case 'lot_status':
+        $reportData = $reportObj->generateLotStatusReport();
+        break;
+    case 'payment_status':
+        $reportData = $reportObj->generatePaymentStatusReport();
+        break;
+    case 'penalty':
+        $reportData = $reportObj->generatePenaltyReport();
+        break;
+}
+
+// Process Excel export
+if (isset($_POST['export_excel'])) {
+    // Store parameters in session
+    $_SESSION['export_data'] = $reportData;
+    $_SESSION['export_summary'] = $summary;
+    $_SESSION['export_type'] = $reportType;
+    $_SESSION['start_date'] = $startDate;
+    $_SESSION['end_date'] = $endDate;
+?>
+    <form id="returnForm" action="generate_report.php" method="GET">
+        <input type="hidden" name="report_type" value="<?= htmlspecialchars($reportType) ?>">
+        <input type="hidden" name="start_date" value="<?= htmlspecialchars($startDate ?? '') ?>">
+        <input type="hidden" name="end_date" value="<?= htmlspecialchars($endDate ?? '') ?>">
+    </form>
+    <script>
+        // First redirect to export
+        window.location.href = 'export_report.php';
+        // Then submit the return form after a delay
+        setTimeout(function() {
+            document.getElementById('returnForm').submit();
+        }, 1000);
+    </script>
+<?php
+    exit;
+}
 ?>
 
 <div class="dashboard-container">
@@ -322,6 +258,12 @@
     width: 100%;
 }
 
+@media (min-width: 1200px) {
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+}
+
 .display-5 {
     font-size: 2.5rem !important;
     margin-bottom: 0.5rem !important;
@@ -462,7 +404,6 @@ $(document).ready(function() {
             "infoEmpty": "No entries available",
             "infoFiltered": "(filtered from _MAX_ total entries)"
         },
-        "dom": '<"row mb-2"<"col-md-6"f><"col-md-6 text-end"l>>rtip'
     });
 });
 </script>
