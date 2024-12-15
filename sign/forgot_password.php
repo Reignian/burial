@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $message .= $resetLink . "\n\n";
             $message .= "This link will expire in 1 hour.\n\n";
             $message .= "If you did not request this reset, please ignore this email.\n\n";
-            $message .= "Best regards,\nBurial Management System";
+            $message .= "Best regards,\nSto. Nino Parish Cemetery Office";
             
             // PHPMailer setup
             $mail = new PHPMailer(true);
@@ -43,13 +43,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $mail->isSMTP();
                 $mail->Host = 'smtp.gmail.com';
                 $mail->SMTPAuth = true;
-                $mail->Username = 'moonarcheye@gmail.com'; // Your Gmail address
-                $mail->Password = 'afnw hsko zqdm zpwr'; // Your Gmail password or App Password
+                $mail->Username = 'stoninoparishcemetery@gmail.com'; // Your Gmail address
+                $mail->Password = 'vbfq umvs ibff xxjv'; // Your Gmail password or App Password
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                 $mail->Port = 587;
 
                 //Recipients
-                $mail->setFrom('moonarcheye@gmail.com', 'Burial Management System');
+                $mail->setFrom('stoninoparishcemetery@gmail.com', 'Sto. Nino Parish Cemetery Office');
                 $mail->addAddress($email); // Add a recipient
 
                 // Content
