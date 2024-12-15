@@ -98,43 +98,37 @@ if (!isset($_POST['export_excel']) && isset($_SESSION['export_logged'])) {
         </div>
 
         <div class="filter-section">
-            <form method="GET" action="">
+            <form method="GET" action="" id="reportForm">
                 <div class="filters-container">
                     <div class="filter-row">
                         <div class="filter-group">
                             <label for="report_type">Report Type</label>
-                            <select id="report_type" name="report_type" class="form-select">
+                            <select id="report_type" name="report_type" class="form-select" onchange="handleReportTypeChange()">
                                 <option value="revenue" <?= $reportType == 'revenue' ? 'selected' : '' ?>>Revenue Report</option>
                                 <option value="lot_status" <?= $reportType == 'lot_status' ? 'selected' : '' ?>>Lot Status Report</option>
                                 <option value="payment_status" <?= $reportType == 'payment_status' ? 'selected' : '' ?>>Payment Status Report</option>
                                 <option value="penalty" <?= $reportType == 'penalty' ? 'selected' : '' ?>>Penalty Report</option>
                             </select>
                         </div>
-                        <?php if ($reportType == 'revenue'): ?>
-                            <div class="date-filters">
-                                <div class="filter-group">
-                                    <label for="start_date">Start Date</label>
-                                    <input type="date" id="start_date" name="start_date" class="form-control" value="<?= $startDate ?>">
-                                </div>
-                                <div class="filter-group">
-                                    <label for="end_date">End Date</label>
-                                    <input type="date" id="end_date" name="end_date" class="form-control" value="<?= $endDate ?>">
-                                </div>
-                                <div class="filter-group">
-                                    <label>&nbsp;</label>
-                                    <button type="submit" class="filter-btn" name="generate" value="true">
-                                        <i class="fas fa-filter"></i> Generate Report
-                                    </button>
-                                </div>
+                        <div id="dateFields" class="date-filters" style="display: <?= $reportType == 'revenue' ? 'flex' : 'none' ?>;">
+                            <div class="filter-group">
+                                <label for="start_date">Start Date</label>
+                                <input type="date" id="start_date" name="start_date" class="form-control" value="<?= $startDate ?>">
                             </div>
-                        <?php else: ?>
+                            <div class="filter-group">
+                                <label for="end_date">End Date</label>
+                                <input type="date" id="end_date" name="end_date" class="form-control" value="<?= $endDate ?>">
+                            </div>
                             <div class="filter-group">
                                 <label>&nbsp;</label>
                                 <button type="submit" class="filter-btn" name="generate" value="true">
                                     <i class="fas fa-filter"></i> Generate Report
                                 </button>
                             </div>
-                        <?php endif; ?>
+                        </div>
+                        <div id="nonRevenueButton" class="filter-group" style="display: <?= $reportType != 'revenue' ? 'block' : 'none' ?>;">
+                            <label>&nbsp;</label>
+                        </div>
                     </div>
                 </div>
             </form>
@@ -189,11 +183,11 @@ if (!isset($_POST['export_excel']) && isset($_SESSION['export_logged'])) {
                 <h3 class="mb-0"><i class="fas fa-table"></i> <?= ucfirst($reportType) ?> Details</h3>
                 <div class="table-actions">
                     <button class="btn btn-danger me-2" onclick="exportToPDF()">
-                        <i class="fas fa-file-pdf"></i> Export to PDF
+                        <i class="fas fa-file-pdf"></i> Export PDF
                     </button>
-                    <form method="POST" action="" style="display: inline;">
+                    <form method="POST" style="display: inline;">
                         <button type="submit" name="export_excel" class="btn btn-success">
-                            <i class="fas fa-file-excel"></i> Export to Excel
+                            <i class="fas fa-file-excel"></i> Export Excel
                         </button>
                     </form>
                 </div>
@@ -427,6 +421,31 @@ if (!isset($_POST['export_excel']) && isset($_SESSION['export_logged'])) {
 </style>
 
 <script>
+function handleReportTypeChange() {
+    const reportType = document.getElementById('report_type').value;
+    const dateFields = document.getElementById('dateFields');
+    const nonRevenueButton = document.getElementById('nonRevenueButton');
+    
+    // Toggle visibility of date fields and buttons
+    dateFields.style.display = reportType === 'revenue' ? 'flex' : 'none';
+    nonRevenueButton.style.display = reportType === 'revenue' ? 'none' : 'block';
+    
+    // Clear date fields if not revenue report
+    if (reportType !== 'revenue') {
+        document.getElementById('start_date').value = '';
+        document.getElementById('end_date').value = '';
+    }
+    
+    // Submit the form with the generate parameter
+    const form = document.getElementById('reportForm');
+    const generateInput = document.createElement('input');
+    generateInput.type = 'hidden';
+    generateInput.name = 'generate';
+    generateInput.value = 'true';
+    form.appendChild(generateInput);
+    form.submit();
+}
+
 $(document).ready(function() {
     $('#reportTable').DataTable({
         "pageLength": 25,
@@ -441,19 +460,7 @@ $(document).ready(function() {
         },
     });
 });
-</script>
 
-<!-- DataTables CSS -->
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
-<!-- jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<!-- DataTables -->
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
-<!-- jsPDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.20/jspdf.plugin.autotable.min.js"></script>
-
-<script>
 function exportToPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
@@ -479,3 +486,13 @@ function exportToPDF() {
     doc.save(`${reportType}_report.pdf`);
 }
 </script>
+
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- DataTables -->
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.20/jspdf.plugin.autotable.min.js"></script>
