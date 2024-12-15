@@ -130,7 +130,7 @@ class Reservation_class{
     }
 
     function account_lot($reservation_id) {
-        $sql = "SELECT l.lot_name
+        $sql = "SELECT CONCAT(l.lot_name, ' - ', l.location) as lot_details
                 FROM reservation r
                 JOIN lots l ON r.lot_id = l.lot_id
                 WHERE r.reservation_id = :reservation_id";
