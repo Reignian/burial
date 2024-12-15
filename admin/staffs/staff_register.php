@@ -2,6 +2,12 @@
 session_start();
 require_once __DIR__ . '/staffs.class.php';
 require_once __DIR__ . '/../../functions.php';
+require '../../PHPMailer/src/Exception.php';
+require '../../PHPMailer/src/PHPMailer.php';
+require '../../PHPMailer/src/SMTP.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register_staff'])) {
     $staffObj = new Staffs_class();
@@ -46,15 +52,61 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register_staff'])) {
     }
 
     if (empty($errors)) {
-        if ($staffObj->addStaff($first_name, $middle_name, $last_name, $username, $password, $email, $phone_number)) {
-            $_SESSION['success_message'] = 'Staff member added successfully';
-            unset($_SESSION['staff_form_data']);
-            unset($_SESSION['staff_errors']);
-        } else {
-            $_SESSION['error_message'] = 'Failed to add staff member';
+        // Generate verification code
+        $verification_code = sprintf("%06d", mt_rand(1, 999999));
+        
+        // Store staff data in session
+        $_SESSION['temp_staff_data'] = [
+            'first_name' => $first_name,
+            'middle_name' => $middle_name,
+            'last_name' => $last_name,
+            'username' => $username,
+            'password' => $password,
+            'email' => $email,
+            'phone_number' => $phone_number
+        ];
+        $_SESSION['staff_verification_code'] = $verification_code;
+
+        // Send verification email
+        $mail = new PHPMailer(true);
+        try {
+            //Server settings
+            $mail->isSMTP();
+            $mail->Host = 'smtp.gmail.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'stoninoparishcemetery@gmail.com';
+            $mail->Password = 'vbfq umvs ibff xxjv';
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = 587;
+
+            //Recipients
+            $mail->setFrom('stoninoparishcemetery@gmail.com', 'Sto. Nino Parish Cemetery Office');
+            $mail->addAddress($email);
+
+            // Content
+            $mail->isHTML(true);
+            $mail->Subject = "Staff Email Verification - Sto. Nino Parish Cemetery";
+            $mail->Body = "
+                <h2>Staff Email Verification</h2>
+                <p>Hello " . htmlspecialchars($first_name) . ",</p>
+                <p>You have been registered as a staff member. Please use the following verification code to complete your registration:</p>
+                <h1 style='font-size: 24px; color: #006064; letter-spacing: 2px;'>" . $verification_code . "</h1>
+                <p>This code will expire in 30 minutes.</p>
+                <p>If you did not expect this registration, please contact the administrator.</p>
+                <p>Best regards,<br>Sto. Nino Parish Cemetery Office</p>";
+
+            $mail->send();
+            header('Location: verify_staff_email.php');
+            exit;
+        } catch (Exception $e) {
+            $_SESSION['error_message'] = "Failed to send verification email. Please try again.";
+            header('Location: ../staff.php');
+            exit;
         }
     } else {
         $_SESSION['error_message'] = implode(', ', $errors);
+        header('Location: ../staff.php');
+        exit;
     }
 }
 

@@ -1,7 +1,14 @@
 <?php
     require_once '../functions.php';
     require_once 'account.class.php';
+    require '../PHPMailer/src/Exception.php';
+    require '../PHPMailer/src/PHPMailer.php';
+    require '../PHPMailer/src/SMTP.php';
 
+    use PHPMailer\PHPMailer\PHPMailer;
+    use PHPMailer\PHPMailer\Exception;
+
+    session_start();
 
     $first_name = $middle_name = $last_name = $username = $password = $confirm_password = $email = $phone_number = '';
     $first_nameErr = $last_nameErr = $usernameErr = $passwordErr = $confirm_passwordErr = $emailErr = $phone_numberErr = '';
@@ -43,10 +50,12 @@
             $confirm_passwordErr = 'Passwords do not match';
         }
 
-        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $emailErr = '';
-        } else {
+        if (empty($email)) {
+            $emailErr = 'Email is required';
+        } else if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $emailErr = 'The email address is invalid.';
+        } else if ($accountObj->emailExists($email)) {
+            $emailErr = 'This email is already registered';
         }
 
         $phone = preg_match('/^(09|\+639)\d{9}$/',$phone_number);
@@ -57,25 +66,57 @@
             $phone_numberErr = 'Invalid phone number';
         }
 
-
-
         if(empty($first_nameErr) && empty($last_nameErr) && empty($usernameErr) && empty($passwordErr) && empty($confirm_passwordErr) && empty($emailErr) && empty($phone_numberErr)){
-            $accountObj->first_name = $first_name;
-            $accountObj->middle_name = $middle_name;
-            $accountObj->last_name = $last_name;
-            $accountObj->username = $username;
-            $accountObj->password = $password;
-            $accountObj->email = $email;
-            $accountObj->phone_number = $phone_number;
-    
-            if($accountObj->add()){
-                header('Location: login.php');
-            } else {
-                echo 'Something went wrong';
+            // Generate verification code
+            $verification_code = sprintf("%06d", mt_rand(1, 999999));
+            
+            // Store signup data in session
+            $_SESSION['temp_signup_data'] = [
+                'first_name' => $first_name,
+                'middle_name' => $middle_name,
+                'last_name' => $last_name,
+                'username' => $username,
+                'password' => $password,
+                'email' => $email,
+                'phone_number' => $phone_number
+            ];
+            $_SESSION['verification_code'] = $verification_code;
+
+            // Send verification email
+            $mail = new PHPMailer(true);
+            try {
+                //Server settings
+                $mail->isSMTP();
+                $mail->Host = 'smtp.gmail.com';
+                $mail->SMTPAuth = true;
+                $mail->Username = 'stoninoparishcemetery@gmail.com';
+                $mail->Password = 'vbfq umvs ibff xxjv';
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port = 587;
+
+                //Recipients
+                $mail->setFrom('stoninoparishcemetery@gmail.com', 'Sto. Nino Parish Cemetery Office');
+                $mail->addAddress($email);
+
+                // Content
+                $mail->isHTML(true);
+                $mail->Subject = "Email Verification - Sto. Nino Parish Cemetery";
+                $mail->Body = "
+                    <h2>Email Verification</h2>
+                    <p>Hello " . htmlspecialchars($first_name) . ",</p>
+                    <p>Thank you for signing up. Please use the following verification code to complete your registration:</p>
+                    <h1 style='font-size: 24px; color: #006064; letter-spacing: 2px;'>" . $verification_code . "</h1>
+                    <p>This code will expire in 30 minutes.</p>
+                    <p>If you did not request this verification, please ignore this email.</p>
+                    <p>Best regards,<br>Sto. Nino Parish Cemetery Office</p>";
+
+                $mail->send();
+                header('Location: verify_email.php');
+                exit;
+            } catch (Exception $e) {
+                $error = "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
             }
         }
-
-
     }
 ?>
 <!DOCTYPE html>

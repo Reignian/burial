@@ -199,14 +199,11 @@ class Account{
 
     // Check if email exists
     public function emailExists($email) {
-        try {
-            $sql = "SELECT email FROM account WHERE email = ?";
-            $stmt = $this->db->connect()->prepare($sql);
-            $stmt->execute([$email]);
-            return $stmt->rowCount() > 0;
-        } catch (PDOException $e) {
-            return false;
-        }
+        $sql = "SELECT account_id FROM account WHERE email = :email";
+        $stmt = $this->db->connect()->prepare($sql);
+        $stmt->bindParam(':email', $email);
+        $stmt->execute();
+        return $stmt->rowCount() > 0;
     }
 }
 
