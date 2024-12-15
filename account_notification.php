@@ -30,7 +30,14 @@ require_once __DIR__ . '/website/notification.class.php';
 $notification = new Notification();
 $notifications = $notification->getNotifications($_SESSION['account']['account_id']);
 
-// Mark notification as read if clicked
+// Mark notification as read if clicked (AJAX endpoint)
+if (isset($_POST['notification_id']) && isset($_POST['ajax'])) {
+    $notification->markAsRead($_POST['notification_id']);
+    echo json_encode(['success' => true]);
+    exit();
+}
+
+// Legacy form submission handler
 if (isset($_POST['notification_id'])) {
     $notification->markAsRead($_POST['notification_id']);
     header('Location: account_notification.php');
@@ -212,7 +219,7 @@ $notification->checkReservationStatus();
 <body>
 
     <!-- Notification Modal -->
-    <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
+    <div class="modal fade" id="notificationModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
@@ -296,6 +303,12 @@ $notification->checkReservationStatus();
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const notificationButtons = document.querySelectorAll('.view-notification');
+            const notificationModal = document.getElementById('notificationModal');
+            
+            // Add modal hidden event listener for page refresh
+            notificationModal.addEventListener('hidden.bs.modal', function () {
+                location.reload();
+            });
             
             notificationButtons.forEach(button => {
                 button.addEventListener('click', async function(e) {
@@ -303,26 +316,36 @@ $notification->checkReservationStatus();
                     const notificationId = this.dataset.notificationId;
                     const referenceId = this.dataset.referenceId;
                     const type = this.dataset.type;
-                    
-                    console.log('Clicked notification:', {
-                        notificationId,
-                        referenceId,
-                        type
-                    });
-                    
+                    const notificationItem = this.closest('.notification-item');
+
+                    // Show modal first
+                    const modal = new bootstrap.Modal(document.getElementById('notificationModal'));
+                    modal.show();
+
+                    // Mark as read immediately when modal opens
                     try {
-                        // Use existing markAsRead functionality via form submission
                         const formData = new FormData();
                         formData.append('notification_id', notificationId);
+                        formData.append('ajax', true);
                         
-                        await fetch('account_notification.php', {
+                        const response = await fetch('account_notification.php', {
                             method: 'POST',
                             body: formData
                         });
                         
-                        console.log('Fetching notification details...');
-                        
-                        // Fetch notification details
+                        const result = await response.json();
+                        if (result.success) {
+                            // Update UI to show notification as read
+                            if (notificationItem) {
+                                notificationItem.classList.remove('unread');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error marking notification as read:', error);
+                    }
+
+                    // Fetch and display notification details
+                    try {
                         const response = await fetch(`get_notification_details.php?notification_id=${notificationId}&reference_id=${referenceId}&type=${type}`);
                         
                         console.log('Response status:', response.status);
@@ -420,7 +443,6 @@ $notification->checkReservationStatus();
                         
                         console.log('Setting modal content...');
                         document.getElementById('notificationModalBody').innerHTML = modalContent;
-                        new bootstrap.Modal(document.getElementById('notificationModal')).show();
                         console.log('Modal displayed successfully');
                     } catch (error) {
                         console.error('Detailed error:', error);
