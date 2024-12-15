@@ -2,13 +2,16 @@
 // Include navigation first since it handles session and authentication
 include(__DIR__ . '/nav/navigation.php');
 require_once (__DIR__ . '/generate_report/report.class.php');
+require_once (__DIR__ . '/staffs/staffs.class.php');
 
 $reportObj = new Report_class();
+$staffObj = new Staffs_class();
 
 // Get filter parameters with validation
 $startDate = filter_input(INPUT_GET, 'start_date') ?: null;
 $endDate = filter_input(INPUT_GET, 'end_date') ?: null;
 $reportType = filter_input(INPUT_GET, 'report_type') ?: 'revenue';
+$generateReport = filter_input(INPUT_GET, 'generate') === 'true';
 
 // Validate date range if provided
 if ($startDate && $endDate && strtotime($startDate) > strtotime($endDate)) {
@@ -19,24 +22,44 @@ if ($startDate && $endDate && strtotime($startDate) > strtotime($endDate)) {
 // Get report data based on type
 $reportData = [];
 $summary = [];
+$logDetails = '';
 switch ($reportType) {
     case 'revenue':
         $reportData = $reportObj->generateRevenueReport($startDate, $endDate);
         $summary = $reportObj->getReportSummary($startDate, $endDate);
+        $logDetails = "Generated Revenue Report" . ($startDate && $endDate ? " from $startDate to $endDate" : "");
         break;
     case 'lot_status':
         $reportData = $reportObj->generateLotStatusReport();
+        $logDetails = "Generated Lot Status Report";
         break;
     case 'payment_status':
         $reportData = $reportObj->generatePaymentStatusReport();
+        $logDetails = "Generated Payment Status Report";
         break;
     case 'penalty':
         $reportData = $reportObj->generatePenaltyReport();
+        $logDetails = "Generated Penalty Report";
         break;
 }
 
+// Log report generation only when explicitly requested
+if (!empty($reportData) && $generateReport) {
+    $staffObj->addStaffLog($_SESSION['account']['account_id'], "Generate Report", $logDetails);
+}
+
+// Log PDF export if requested
+if (isset($_POST['log_pdf_export'])) {
+    $staffObj->addStaffLog($_SESSION['account']['account_id'], "Export Report", "Exported $reportType report to PDF" . ($startDate && $endDate ? " for period $startDate to $endDate" : ""));
+    exit;
+}
+
 // Process Excel export
-if (isset($_POST['export_excel'])) {
+if (isset($_POST['export_excel']) && !isset($_SESSION['export_logged'])) {
+    // Log export action only once
+    $staffObj->addStaffLog($_SESSION['account']['account_id'], "Export Report", "Exported $reportType report to Excel" . ($startDate && $endDate ? " for period $startDate to $endDate" : ""));
+    $_SESSION['export_logged'] = true;
+    
     // Store parameters in session
     $_SESSION['export_data'] = $reportData;
     $_SESSION['export_summary'] = $summary;
@@ -60,6 +83,11 @@ if (isset($_POST['export_excel'])) {
 <?php
     exit;
 }
+
+// Clear export logged flag if it exists and we're not exporting
+if (!isset($_POST['export_excel']) && isset($_SESSION['export_logged'])) {
+    unset($_SESSION['export_logged']);
+}
 ?>
 
 <div class="dashboard-container">
@@ -75,7 +103,7 @@ if (isset($_POST['export_excel'])) {
                     <div class="filter-row">
                         <div class="filter-group">
                             <label for="report_type">Report Type</label>
-                            <select id="report_type" name="report_type" class="form-select" onchange="this.form.submit()">
+                            <select id="report_type" name="report_type" class="form-select">
                                 <option value="revenue" <?= $reportType == 'revenue' ? 'selected' : '' ?>>Revenue Report</option>
                                 <option value="lot_status" <?= $reportType == 'lot_status' ? 'selected' : '' ?>>Lot Status Report</option>
                                 <option value="payment_status" <?= $reportType == 'payment_status' ? 'selected' : '' ?>>Payment Status Report</option>
@@ -94,10 +122,17 @@ if (isset($_POST['export_excel'])) {
                                 </div>
                                 <div class="filter-group">
                                     <label>&nbsp;</label>
-                                    <button type="submit" class="filter-btn">
-                                        <i class="fas fa-filter"></i> Apply Filters
+                                    <button type="submit" class="filter-btn" name="generate" value="true">
+                                        <i class="fas fa-filter"></i> Generate Report
                                     </button>
                                 </div>
+                            </div>
+                        <?php else: ?>
+                            <div class="filter-group">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="filter-btn" name="generate" value="true">
+                                    <i class="fas fa-filter"></i> Generate Report
+                                </button>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -423,6 +458,15 @@ function exportToPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const reportType = '<?= $reportType ?>';
+    
+    // Log the PDF export
+    fetch('generate_report.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'log_pdf_export=1'
+    });
     
     doc.autoTable({ 
         html: '#reportTable',
