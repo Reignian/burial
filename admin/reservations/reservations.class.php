@@ -180,8 +180,14 @@ class Reservation_class{
             // Spot cash, no penalty
             return 0;
         } else {
-            // For all other plans, apply penalty
-            return $monthly_payment * 0.03; // 3% penalty
+            // Get penalty rate from penalty table
+            $sql = "SELECT penalty_amount FROM penalty WHERE penalty_id = 1";
+            $query = $this->db->connect()->prepare($sql);
+            $query->execute();
+            $penalty = $query->fetch(PDO::FETCH_ASSOC);
+            
+            // Apply penalty rate (stored as percentage in database)
+            return $monthly_payment * ($penalty['penalty_amount'] / 100);
         }
     }
 

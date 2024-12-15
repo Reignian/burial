@@ -1,9 +1,22 @@
 <?php
     include(__DIR__ . '/nav/navigation.php');
     require_once (__DIR__ . '/payments/payments.class.php');
+    require_once (__DIR__ . '/settings/penalty.class.php');
 
     $burialObj = new Payments_class();
+    $penalty = new Penalty();
+    $penaltyRate = $penalty->getPenaltyRate();
     $paymentPlans = $burialObj->showPaymentPlans();
+
+    // Display success/error messages if they exist
+    if (isset($_SESSION['success_message'])) {
+        echo '<script>alert("' . $_SESSION['success_message'] . '");</script>';
+        unset($_SESSION['success_message']);
+    }
+    if (isset($_SESSION['error_message'])) {
+        echo '<script>alert("' . $_SESSION['error_message'] . '");</script>';
+        unset($_SESSION['error_message']);
+    }
 ?>
 
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
@@ -12,6 +25,44 @@
     <div class="text-center mb-4">
         <h1 class="display-5 fw-bold text-uppercase" style="color: #006064;">PAYMENT PLANS</h1>
         <div class="border-bottom border-2 w-25 mx-auto" style="border-color: #006064 !important;"></div>
+    </div>
+
+    <!-- Simple Penalty Rate Section -->
+    <div class="mb-4">
+        <div class="col-12">
+            <div class="input-group">
+                <span class="input-group-text">Monthly Penalty Rate:</span>
+                <input type="number" class="form-control" value="<?php echo $penaltyRate; ?>" readonly>
+                <span class="input-group-text">%</span>
+                <?php if($_SESSION['account']['is_admin']): ?>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editPenaltyModal">Edit</button>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Penalty Modal -->
+    <div class="modal fade" id="editPenaltyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Penalty Rate</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="settings/handle_penalty.php" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="new_penalty_rate" class="form-label">New Penalty Rate (%)</label>
+                            <input type="number" step="0.1" class="form-control" id="new_penalty_rate" name="new_penalty_rate" value="<?php echo $penaltyRate; ?>" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <div class="card">
