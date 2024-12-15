@@ -14,7 +14,7 @@ class Reservation_class{
         $this->db = new Database();
     }
 
-    function showALL_reservation(){
+    function showALL_reservation() {
 
         $sql = "SELECT * FROM reservation WHERE request = 'Confirmed';";
         $query = $this->db->connect()->prepare($sql);
@@ -46,7 +46,7 @@ class Reservation_class{
         return $query->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function cancelReservation($reservationID) {
+    public function cancelReservation($reservationID, $cancellationReason = '') {
         try {
             $this->db->connect()->beginTransaction();
 
@@ -85,7 +85,8 @@ class Reservation_class{
                         "Total Payments Made: %d\n" .
                         "Total Amount Paid: ₱%s\n" .
                         "Remaining Balance: ₱%s\n" .
-                        "Cancellation Date: %s",
+                        "Cancellation Date: %s\n" .
+                        "Reason for Cancellation: %s",
                         $reservationID,
                         $reservationDetails['client_name'],
                         $reservationDetails['lot_details'],
@@ -94,7 +95,8 @@ class Reservation_class{
                         $reservationDetails['payment_count'],
                         number_format($reservationDetails['total_paid'], 2),
                         number_format($reservationDetails['balance'], 2),
-                        date('F j, Y g:i A')
+                        date('F j, Y g:i A'),
+                        $cancellationReason
                     );
                     
                     $staffs = new Staffs_class();

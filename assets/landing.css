@@ -71,10 +71,34 @@
     border: none;
     box-shadow: 0 0 15px rgba(0,0,0,0.1);
     transition: transform 0.3s;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .card:hover {
     transform: translateY(-5px);
+}
+
+.card-img-top {
+    width: 100%;
+    height: 250px; /* Fixed height for all images */
+    object-fit: cover; /* This ensures images maintain aspect ratio while filling the space */
+}
+
+.card-body {
+    flex: 1; /* This ensures all card bodies have the same height */
+    display: flex;
+    flex-direction: column;
+}
+
+.card-text {
+    flex: 1; /* This makes the text area expand to fill available space */
+    margin-bottom: 1rem;
+}
+
+.btn-primary {
+    margin-top: auto; /* This pushes the button to the bottom */
 }
 
 .contact-info li {

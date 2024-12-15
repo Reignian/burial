@@ -49,7 +49,7 @@
 <!-- Products Section -->
 <section id="products" class="py-5">
     <div class="container">
-        <h2 class="text-center mb-5">Available Memorial Lots</h2>
+        <h2 class="text-center mb-5 fw-bold" style="font-family: 'Georgia'">Available Memorial Lots</h2>
         <div class="owl-carousel product-carousel">
 
         <?php foreach ($array2 as $arr) { ?>
@@ -58,7 +58,7 @@
                 <div class="card">
                     <img src="<?= htmlspecialchars($arr['image']) ?>" class="card-img-top" alt="Lawn Lot">
                     <div class="card-body">
-                        <h5 class="card-title"><?= htmlspecialchars($arr['heading']) ?></h5>
+                        <h5 class="card-title fw-bold" style="color: #006064" ><?= htmlspecialchars($arr['heading']) ?></h5>
                         <p class="card-text"><?= nl2br(htmlspecialchars($arr['text'])) ?></p>
                         <a href="browse_lots.php" class="btn btn-primary">Learn More</a>
                     </div>
@@ -75,7 +75,7 @@
 <section id="features">
     <div class="container-fluid px-0">
         <div class="container">
-            <h2 class="text-center mb-5">Why Choose Us</h2>
+            <h2 class="text-center mb-5 fw-bold" style="font-family: 'Georgia'" >Why Choose Us</h2>
             <div class="row g-4">
                 <div class="col-md-4">
                     <div class="feature-box text-center">
@@ -130,6 +130,12 @@
         });
     });
 </script>
+
+<style>
+    .owl-nav{
+        display: none!important;
+    }
+</style>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>

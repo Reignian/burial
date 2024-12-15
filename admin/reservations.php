@@ -7,17 +7,28 @@
 
     $resarray = $burialObj->showALL_reservation();
 
-    // Handle reservation cancellation
-    if (isset($_POST['cancel_reservation'])) {
+    // Handle reservation cancellation with reason
+    if (isset($_POST['cancel_reservation']) && isset($_POST['reservation_id']) && isset($_POST['cancellation_reason'])) {
         $reservationID = $_POST['reservation_id'];
-        $result = $burialObj->cancelReservation($reservationID);
-        if ($result === true) {
-            echo "<script>alert('Reservation cancelled successfully.');</script>";
+        $cancellationReason = trim($_POST['cancellation_reason']);
+        
+        if (empty($cancellationReason)) {
+            echo "<script>alert('Please provide a reason for cancellation.');</script>";
         } else {
-            echo "<script>alert('" . addslashes($result) . "');</script>";
+            $reservation = new Reservation_class();
+            if ($reservation->cancelReservation($reservationID, $cancellationReason)) {
+                echo "<script>
+                    alert('Reservation has been cancelled successfully.');
+                    window.location.href = '" . $_SERVER['PHP_SELF'] . "';
+                </script>";
+            } else {
+                echo "<script>
+                    alert('Failed to cancel the reservation. Please try again.');
+                    window.location.href = '" . $_SERVER['PHP_SELF'] . "';
+                </script>";
+            }
         }
-        // Refresh the page to update the reservation list
-        echo "<script>window.location.href = 'reservations.php';</script>";
+        exit();
     }
 ?>
 <!-- Add DataTables CSS after Bootstrap CSS -->
@@ -159,11 +170,13 @@
                                             
                                             <?php if ($resarr['request'] !== 'Cancelled'): ?>
                                                 <form method="post" style="display: inline;" 
-                                                      onsubmit="return confirmCancellation(<?= $resarr['reservation_id'] ?>, '<?= addslashes($accountname) ?>', '<?= date('M d, Y', strtotime($resarr['reservation_date'])) ?>', <?= $balance ?>);">
+                                                      onsubmit="return showCancellationModal(<?= $resarr['reservation_id'] ?>, '<?= addslashes($accountname) ?>', '<?= date('M d, Y', strtotime($resarr['reservation_date'])) ?>', <?= $balance ?>);">
                                                     <input type="hidden" name="reservation_id" value="<?= $resarr['reservation_id'] ?>">
-                                                    <button type="submit" name="cancel_reservation" class="btn btn-sm btn-danger d-flex align-items-center">
+                                                    <?php if($_SESSION['account']['is_admin']): ?>
+                                                    <button type="submit" class="btn btn-sm btn-danger d-flex align-items-center">
                                                         <i class="fas fa-times-circle me-1"></i> Cancel
                                                     </button>
+                                                    <?php endif; ?>
                                                 </form>
                                             <?php endif; ?>
                                         </div>
@@ -220,6 +233,15 @@ function confirmCancellation(reservationId, accountName, reservationDate, balanc
     message += "This action cannot be undone.";
 
     return confirm(message);
+}
+
+function showCancellationModal(reservationId, accountName, reservationDate, balance) {
+    const modal = new bootstrap.Modal(document.getElementById('cancellationModal'));
+    document.getElementById('modalReservationId').value = reservationId;
+    document.getElementById('cancellationConfirmText').innerHTML = `Are you sure you want to cancel the reservation for ${accountName} on ${reservationDate}?` + 
+        (balance > 0 ? `<br><br><strong>Note:</strong> This reservation has a remaining balance of ₱${balance.toLocaleString()}.` : '');
+    modal.show();
+    return false;
 }
 </script>
 
@@ -569,5 +591,33 @@ span[style*="color: orange"] {
 }
 
 </style>
+
+<!-- Add this modal at the end of the file, before the closing body tag -->
+<div class="modal fade" id="cancellationModal" tabindex="-1" aria-labelledby="cancellationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancellationModalLabel">Cancel Reservation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="cancellationForm" method="post">
+                <div class="modal-body">
+                    <p id="cancellationConfirmText"></p>
+                    <div class="mb-3">
+                        <label for="cancellationReason" class="form-label">Reason for Cancellation</label>
+                        <textarea class="form-control" id="cancellationReason" name="cancellation_reason" rows="3" required></textarea>
+                    </div>
+                    <input type="hidden" name="reservation_id" id="modalReservationId">
+                    <input type="hidden" name="cancel_reservation" value="1">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
