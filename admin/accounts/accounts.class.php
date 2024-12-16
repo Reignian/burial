@@ -131,4 +131,30 @@ class Accounts_class {
             throw $e;
         }
     }
+
+    function changePassword($account_id, $current_password, $new_password) {
+        try {
+            // First verify current password
+            $sql = "SELECT password FROM account WHERE account_id = ?";
+            $query = $this->db->connect()->prepare($sql);
+            $query->execute([$account_id]);
+            $result = $query->fetch();
+            
+            if (!$result || !password_verify($current_password, $result['password'])) {
+                throw new Exception("Current password is incorrect");
+            }
+
+            // Update to new password
+            $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+            $sql = "UPDATE account SET password = ? WHERE account_id = ?";
+            $query = $this->db->connect()->prepare($sql);
+            return $query->execute([$hashed_password, $account_id]);
+        } catch (PDOException $e) {
+            error_log("Error changing password: " . $e->getMessage());
+            return false;
+        } catch (Exception $e) {
+            error_log("Error changing password: " . $e->getMessage());
+            throw $e;
+        }
+    }
 }

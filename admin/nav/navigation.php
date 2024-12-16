@@ -360,8 +360,43 @@
                         <div class="invalid-feedback" id="phoneError"></div>
                     </div>
                     <div class="modal-footer">
+                        <button type="button" class="btn btn" style="background-color: #6c757d; color: white;" data-bs-toggle="modal" data-bs-target="#changePasswordModal">Change Password</button>
+                        <button type="submit" class="btn btn" style="background-color: #006064; color: white;" >Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="changePasswordForm" action="../admin/accounts/change_password.php" method="POST">
+                    <div class="mb-3">
+                        <label for="currentPassword" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="currentPassword" name="current_password" required>
+                        <div class="invalid-feedback" id="currentPasswordError"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="newPassword" name="new_password" required>
+                        <div class="invalid-feedback" id="newPasswordError"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirmPassword" name="confirm_password" required>
+                        <div class="invalid-feedback" id="confirmPasswordError"></div>
+                    </div>
+                    <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <button type="submit" class="btn btn" style="background-color: #006064; color: white;">Change Password</button>
                     </div>
                 </form>
             </div>
@@ -434,6 +469,57 @@ if (editAccountForm) {
             document.getElementById('usernameError').textContent = 'Username is required';
             document.getElementById('usernameError').style.display = 'block';
             username.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        if (isValid) {
+            this.submit();
+        }
+    });
+}
+</script>
+
+<script>
+// Add password form validation
+const changePasswordForm = document.getElementById('changePasswordForm');
+if (changePasswordForm) {
+    changePasswordForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        let isValid = true;
+        
+        // Clear previous error messages
+        document.querySelectorAll('.invalid-feedback').forEach(div => div.style.display = 'none');
+        document.querySelectorAll('.form-control').forEach(input => input.classList.remove('is-invalid'));
+        
+        // Validate Current Password
+        const currentPassword = document.getElementById('currentPassword');
+        if (currentPassword && !currentPassword.value.trim()) {
+            document.getElementById('currentPasswordError').textContent = 'Current password is required';
+            document.getElementById('currentPasswordError').style.display = 'block';
+            currentPassword.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        // Validate New Password
+        const newPassword = document.getElementById('newPassword');
+        if (newPassword && !newPassword.value.trim()) {
+            document.getElementById('newPasswordError').textContent = 'New password is required';
+            document.getElementById('newPasswordError').style.display = 'block';
+            newPassword.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        // Validate Confirm Password
+        const confirmPassword = document.getElementById('confirmPassword');
+        if (confirmPassword && !confirmPassword.value.trim()) {
+            document.getElementById('confirmPasswordError').textContent = 'Please confirm your new password';
+            document.getElementById('confirmPasswordError').style.display = 'block';
+            confirmPassword.classList.add('is-invalid');
+            isValid = false;
+        } else if (newPassword && confirmPassword && newPassword.value !== confirmPassword.value) {
+            document.getElementById('confirmPasswordError').textContent = 'Passwords do not match';
+            document.getElementById('confirmPasswordError').style.display = 'block';
+            confirmPassword.classList.add('is-invalid');
             isValid = false;
         }
         
