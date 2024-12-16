@@ -100,4 +100,35 @@ class Accounts_class {
         }
         return false;
     }
+
+    function updateAccount($account_id, $first_name, $middle_name, $last_name, $email, $phone_number, $username) {
+        try {
+            // First check if username is already taken by another account
+            $checkSql = "SELECT account_id FROM account WHERE username = ? AND account_id != ?";
+            $checkQuery = $this->db->connect()->prepare($checkSql);
+            $checkQuery->execute([$username, $account_id]);
+            
+            if ($checkQuery->rowCount() > 0) {
+                throw new Exception("Username already exists");
+            }
+
+            $sql = "UPDATE account SET 
+                    first_name = ?, 
+                    middle_name = ?, 
+                    last_name = ?, 
+                    email = ?, 
+                    phone_number = ?,
+                    username = ?
+                    WHERE account_id = ?";
+            
+            $query = $this->db->connect()->prepare($sql);
+            return $query->execute([$first_name, $middle_name, $last_name, $email, $phone_number, $username, $account_id]);
+        } catch (PDOException $e) {
+            error_log("Error updating account: " . $e->getMessage());
+            return false;
+        } catch (Exception $e) {
+            error_log("Error updating account: " . $e->getMessage());
+            throw $e;
+        }
+    }
 }

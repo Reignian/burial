@@ -237,8 +237,25 @@
 <body>
 
 <div class="sidebar" id="sidebar">
+    <?php if (isset($_SESSION['success'])): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <?= $_SESSION['success'] ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php unset($_SESSION['success']); ?>
+    <?php endif; ?>
+    
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <?= $_SESSION['error'] ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php unset($_SESSION['error']); ?>
+    <?php endif; ?>
+
     <div class="sidebar-header">
         <h3><?= $_SESSION['account']['first_name'], ' ', $_SESSION['account']['middle_name'], ' ', $_SESSION['account']['last_name']?></h3>
+        <span><a href="#" data-bs-toggle="modal" data-bs-target="#editAccountModal" style="color: inherit;"><i class="fas fa-pencil"></i></a></span>
     </div>
     <ul class="sidebar-menu">
         <li><a href="dashboard.php" id="dashboard-link" class="nav-link"><i class="fas fa-tachometer-alt icon"></i><span class="menu-text">Dashboard</span></a></li>
@@ -302,6 +319,56 @@
     <!-- Your page content goes here -->
 </div>
 
+<!-- Edit Account Modal -->
+<div class="modal fade" id="editAccountModal" tabindex="-1" aria-labelledby="editAccountModalLabel" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editAccountModalLabel">Edit Account Information</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editAccountForm" action="../admin/accounts/update_account.php" method="POST">
+                    <div class="mb-3">
+                        <label for="firstName" class="form-label">First Name</label>
+                        <input type="text" class="form-control" id="firstName" name="first_name" value="<?= $_SESSION['account']['first_name'] ?>" required>
+                        <div class="invalid-feedback" id="firstNameError"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="middleName" class="form-label">Middle Name</label>
+                        <input type="text" class="form-control" id="middleName" name="middle_name" value="<?= $_SESSION['account']['middle_name'] ?>">
+                        <div class="invalid-feedback" id="middleNameError"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="lastName" class="form-label">Last Name</label>
+                        <input type="text" class="form-control" id="lastName" name="last_name" value="<?= $_SESSION['account']['last_name'] ?>" required>
+                        <div class="invalid-feedback" id="lastNameError"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" value="<?= $_SESSION['account']['username'] ?>" required>
+                        <div class="invalid-feedback" id="usernameError"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" value="<?= $_SESSION['account']['email'] ?>" required>
+                        <div class="invalid-feedback" id="emailError"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone_number" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="phone_number" name="phone_number" value="<?= $_SESSION['account']['phone_number'] ?>" required>
+                        <div class="invalid-feedback" id="phoneError"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     $(document).ready(function () {
         $('.sidebar-menu li').on('click', function () {
@@ -311,8 +378,75 @@
     });
 </script>
 
+<script>
+// Only run the form validation if the form exists
+const editAccountForm = document.getElementById('editAccountForm');
+if (editAccountForm) {
+    editAccountForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        let isValid = true;
+        
+        // Clear previous error messages
+        document.querySelectorAll('.invalid-feedback').forEach(div => div.style.display = 'none');
+        document.querySelectorAll('.form-control').forEach(input => input.classList.remove('is-invalid'));
+        
+        // Validate First Name
+        const firstName = document.getElementById('firstName');
+        if (firstName && !firstName.value.trim()) {
+            document.getElementById('firstNameError').textContent = 'First name is required';
+            document.getElementById('firstNameError').style.display = 'block';
+            firstName.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        // Validate Last Name
+        const lastName = document.getElementById('lastName');
+        if (lastName && !lastName.value.trim()) {
+            document.getElementById('lastNameError').textContent = 'Last name is required';
+            document.getElementById('lastNameError').style.display = 'block';
+            lastName.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        // Validate Email
+        const email = document.getElementById('email');
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (email && (!email.value.trim() || !emailRegex.test(email.value.trim()))) {
+            document.getElementById('emailError').textContent = 'Please enter a valid email address';
+            document.getElementById('emailError').style.display = 'block';
+            email.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        // Validate Phone Number
+        const phoneNumber = document.getElementById('phone_number');
+        const phoneRegex = /^[0-9]{11}$/;
+        if (phoneNumber && (!phoneNumber.value.trim() || !phoneRegex.test(phoneNumber.value.trim()))) {
+            document.getElementById('phoneError').textContent = 'Please enter a valid 11-digit phone number';
+            document.getElementById('phoneError').style.display = 'block';
+            phoneNumber.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        // Validate Username
+        const username = document.getElementById('username');
+        if (username && !username.value.trim()) {
+            document.getElementById('usernameError').textContent = 'Username is required';
+            document.getElementById('usernameError').style.display = 'block';
+            username.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        if (isValid) {
+            this.submit();
+        }
+    });
+}
+</script>
+
 <!-- Add Bootstrap JS for dropdown functionality -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Add SSE for payment checks -->
 <script src="__DIR__ . '/../../website/js/check-payments.js"></script>
 
+</html>
