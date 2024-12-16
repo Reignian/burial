@@ -194,70 +194,10 @@ class Reservation_class{
     }
 
     function applyPenaltyAndUpdateBalance($reservation_id, $penalty_amount, $due_date) {
-        // Ensure $due_date is a DateTime object
-        if (!($due_date instanceof DateTime)) {
-            $due_date = new DateTime($due_date);
-        }
-
-        // Start a transaction
-        $conn = $this->db->connect();
-        $conn->beginTransaction();
-
-        try {
-            // Format the due date
-            $formatted_due_date = $due_date->format('Y-m-d H:i:s');
-            $formatted_date_only = $due_date->format('Y-m-d');
-
-            // Check if a penalty has already been applied for this month
-            $sqlCheckPenalty = "SELECT COUNT(*) FROM penalty_log 
-                                WHERE reservation_id = :reservation_id 
-                                AND DATE(penalty_date) = :check_date";
-            $queryCheckPenalty = $conn->prepare($sqlCheckPenalty);
-            $queryCheckPenalty->bindParam(':reservation_id', $reservation_id);
-            $queryCheckPenalty->bindParam(':check_date', $formatted_date_only);
-            
-            if (!$queryCheckPenalty->execute()) {
-                throw new Exception("Failed to check existing penalty");
-            }
-            
-            $penaltyExists = $queryCheckPenalty->fetchColumn();
-
-            if ($penaltyExists == 0) {
-                // Add the penalty to the balance
-                $sqlUpdateBalance = "UPDATE reservation SET balance = balance + :penalty_amount WHERE reservation_id = :reservation_id";
-                $queryUpdateBalance = $conn->prepare($sqlUpdateBalance);
-                $queryUpdateBalance->bindParam(':penalty_amount', $penalty_amount);
-                $queryUpdateBalance->bindParam(':reservation_id', $reservation_id);
-                
-                if (!$queryUpdateBalance->execute()) {
-                    throw new Exception("Failed to update balance");
-                }
-
-                // Log the penalty
-                $sqlLogPenalty = "INSERT INTO penalty_log (reservation_id, penalty_amount, penalty_date) VALUES (:reservation_id, :penalty_amount, :penalty_date)";
-                $queryLogPenalty = $conn->prepare($sqlLogPenalty);
-                $queryLogPenalty->bindParam(':reservation_id', $reservation_id);
-                $queryLogPenalty->bindParam(':penalty_amount', $penalty_amount);
-                $queryLogPenalty->bindParam(':penalty_date', $formatted_due_date);
-                
-                if (!$queryLogPenalty->execute()) {
-                    throw new Exception("Failed to log penalty");
-                }
-
-                // Commit the transaction
-                $conn->commit();
-                return true;
-            } else {
-                // Penalty already applied this month
-                $conn->rollBack();
-                return false;
-            }
-        } catch (Exception $e) {
-            $conn->rollBack();
-            return false;
-        }
+        require_once(__DIR__ . '/../../website/lots.class.php');
+        $lots = new Reservation();
+        return $lots->applyPenaltyAndUpdateBalance($reservation_id, $penalty_amount, $due_date);
     }
-
 
     function Duedate($reservation_id) {
         // First, check if the balance is 0
@@ -312,17 +252,12 @@ class Reservation_class{
         // Calculate the number of days left
         $interval = $current_date->diff($next_due_date);
         $days_left = $interval->days;
-        $is_future = $interval->invert === 0;
+        $is_past_due = $interval->invert === 1;
 
         // Check if the current date is before, on, or after the due date
-        if ($current_date < $next_due_date) {
-            if ($days_left == 1) {
-                return "<span style='color: black;'>Due tomorrow</span>";
-            }
-            return "<span style='color: black;'>{$days_left} day(s) left before monthly due</span>";
-        } elseif ($current_date == $next_due_date) {
+        if ($current_date == $next_due_date) {
             return "<span style='color: orange;'>Due today</span>";
-        } else {
+        } elseif ($is_past_due) {
             if ($days_left > 0) {
                 $penalty_amount = $this->calculatePenalty($reservation_id, $monthly_payment, $days_left);
                 if ($penalty_amount > 0) {
@@ -336,6 +271,11 @@ class Reservation_class{
                     return "<span style='color: red;'>{$days_left} day(s) passed since monthly due (No penalty for spot cash)</span>";
                 }
             }
+        } else {
+            if ($days_left == 1) {
+                return "<span>Due tomorrow</span>";
+            }
+            return "<span>{$days_left} day(s) left before monthly due</span>";
         }
     }
 

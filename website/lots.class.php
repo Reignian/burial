@@ -133,8 +133,7 @@ class Reservation{
         // Convert annual interest rate to monthly
         $monthlyInterestRate = ($paymentPlan['interest_rate'] / 100) / 12;
         $numberOfPayments = $paymentPlan['duration'];
-
-        // For spot cash, set monthly payment to total amount (no amortization needed)
+// For spot cash, set monthly payment to total amount (no amortization needed)
         if ($paymentPlan['plan'] === 'Spot Cash' || $paymentPlan['duration'] == 1) {
             $monthlyPayment = $principalAmount;
             $numberOfPayments = 1;  // Single payment for spot cash
@@ -289,54 +288,79 @@ class Reservation{
         $conn->beginTransaction();
 
         try {
-            // Format the due date
-            $formatted_due_date = $due_date->format('Y-m-d H:i:s');
-            $formatted_date_only = $due_date->format('Y-m-d');
-
-            // Check if a penalty has already been applied for this month
-            $sqlCheckPenalty = "SELECT COUNT(*) FROM penalty_log 
-                                WHERE reservation_id = :reservation_id 
-                                AND DATE(penalty_date) = :check_date";
-            $queryCheckPenalty = $conn->prepare($sqlCheckPenalty);
-            $queryCheckPenalty->bindParam(':reservation_id', $reservation_id);
-            $queryCheckPenalty->bindParam(':check_date', $formatted_date_only);
+            // Get all months between the due date and current date
+            $current_date = new DateTime();
+            $current_date->setTime(0, 0, 0);
+            $check_date = clone $due_date;
+            $check_date->setTime(0, 0, 0);
             
-            if (!$queryCheckPenalty->execute()) {
-                throw new Exception("Failed to check existing penalty");
+            $months_missed = [];
+            while ($check_date <= $current_date) {
+                $months_missed[] = clone $check_date;
+                $check_date->modify('+1 month');
             }
-            
-            $penaltyExists = $queryCheckPenalty->fetchColumn();
 
-            if ($penaltyExists == 0) {
-                // Add the penalty to the balance
-                $sqlUpdateBalance = "UPDATE reservation SET balance = balance + :penalty_amount WHERE reservation_id = :reservation_id";
+            $total_penalties = 0;
+            $penalties_applied = false;
+
+            foreach ($months_missed as $missed_date) {
+                $formatted_date = $missed_date->format('Y-m-d H:i:s');
+                $formatted_month = $missed_date->format('Y-m');
+
+                // Check if a penalty has already been applied for this month
+                $sqlCheckPenalty = "SELECT COUNT(*) FROM penalty_log 
+                                    WHERE reservation_id = :reservation_id 
+                                    AND DATE_FORMAT(penalty_date, '%Y-%m') = :check_month";
+                $queryCheckPenalty = $conn->prepare($sqlCheckPenalty);
+                $queryCheckPenalty->bindParam(':reservation_id', $reservation_id);
+                $queryCheckPenalty->bindParam(':check_month', $formatted_month);
+                
+                if (!$queryCheckPenalty->execute()) {
+                    throw new Exception("Failed to check existing penalty");
+                }
+                
+                $penaltyExists = $queryCheckPenalty->fetchColumn();
+
+                if ($penaltyExists == 0) {
+                    // Log the penalty for this month
+                    $sqlLogPenalty = "INSERT INTO penalty_log (reservation_id, penalty_amount, penalty_date) 
+                                    VALUES (:reservation_id, :penalty_amount, :penalty_date)";
+                    $queryLogPenalty = $conn->prepare($sqlLogPenalty);
+                    $queryLogPenalty->bindParam(':reservation_id', $reservation_id);
+                    $queryLogPenalty->bindParam(':penalty_amount', $penalty_amount);
+                    $queryLogPenalty->bindParam(':penalty_date', $formatted_date);
+                    
+                    if (!$queryLogPenalty->execute()) {
+                        throw new Exception("Failed to log penalty");
+                    }
+
+                    $total_penalties += $penalty_amount;
+                    $penalties_applied = true;
+                }
+            }
+
+            if ($penalties_applied) {
+                // Add all penalties to the balance
+                $sqlUpdateBalance = "UPDATE reservation 
+                                   SET balance = balance + :total_penalties 
+                                   WHERE reservation_id = :reservation_id";
                 $queryUpdateBalance = $conn->prepare($sqlUpdateBalance);
-                $queryUpdateBalance->bindParam(':penalty_amount', $penalty_amount);
+                $queryUpdateBalance->bindParam(':total_penalties', $total_penalties);
                 $queryUpdateBalance->bindParam(':reservation_id', $reservation_id);
                 
                 if (!$queryUpdateBalance->execute()) {
                     throw new Exception("Failed to update balance");
                 }
 
-                // Log the penalty
-                $sqlLogPenalty = "INSERT INTO penalty_log (reservation_id, penalty_amount, penalty_date) VALUES (:reservation_id, :penalty_amount, :penalty_date)";
-                $queryLogPenalty = $conn->prepare($sqlLogPenalty);
-                $queryLogPenalty->bindParam(':reservation_id', $reservation_id);
-                $queryLogPenalty->bindParam(':penalty_amount', $penalty_amount);
-                $queryLogPenalty->bindParam(':penalty_date', $formatted_due_date);
-                
-                if (!$queryLogPenalty->execute()) {
-                    throw new Exception("Failed to log penalty");
-                }
-
                 // Commit the transaction
                 $conn->commit();
                 return true;
-            } else {
-                // Penalty already applied this month
-                $conn->rollBack();
-                return false;
             }
+
+            // No new penalties to apply
+            $conn->rollBack();
+            return false;
+
         } catch (Exception $e) {
             $conn->rollBack();
             return false;
