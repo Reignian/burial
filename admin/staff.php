@@ -10,6 +10,21 @@
         exit();
     }
 
+    if (isset($_POST['delete_staff'])) {
+        session_start();
+        require_once __DIR__ . '/staffs/staffs.class.php';
+        $staffObj = new Staffs_class();
+        $account_id = $_POST['account_id'];
+        
+        if ($staffObj->deleteStaff($account_id)) {
+            $_SESSION['success_message'] = 'Staff deleted successfully!';
+        } else {
+            $_SESSION['error_message'] = 'Failed to delete staff.';
+        }
+        header("Location: staff.php");
+        exit();
+    }
+
     include(__DIR__ . '/nav/navigation.php');
     require_once __DIR__ . '/staffs/staffs.class.php';
 
@@ -72,14 +87,24 @@
                                 </span>
                             </td>
                             <td class="text-center">
-                                <form method="POST" style="display: inline;">
-                                    <input type="hidden" name="account_id" value="<?= $staff['account_id'] ?>">
-                                    <button type="submit" name="toggle_ban" 
-                                            class="btn btn-sm <?= $staff['status'] == 'Banned' ? 'btn-success' : 'btn-danger' ?> d-flex align-items-center mx-auto">
-                                        <i class="fas <?= $staff['status'] == 'Banned' ? 'fa-user-check' : 'fa-user-slash' ?> me-1"></i>
-                                        <?= $staff['status'] == 'Banned' ? 'Unban' : 'Ban' ?>
-                                    </button>
-                                </form>
+                                <div class="d-flex justify-content-center gap-2">
+                                    <form method="POST" style="display: inline;">
+                                        <input type="hidden" name="account_id" value="<?= $staff['account_id'] ?>">
+                                        <button type="submit" name="toggle_ban" 
+                                                class="btn btn-sm <?= $staff['status'] == 'Banned' ? 'btn-success' : 'btn-danger' ?> d-flex align-items-center">
+                                            <i class="fas <?= $staff['status'] == 'Banned' ? 'fa-user-check' : 'fa-user-slash' ?> me-1"></i>
+                                            <?= $staff['status'] == 'Banned' ? 'Unban' : 'Ban' ?>
+                                        </button>
+                                    </form>
+                                    <form method="POST" style="display: inline;" onsubmit="return confirmDelete()">
+                                        <input type="hidden" name="account_id" value="<?= $staff['account_id'] ?>">
+                                        <button type="submit" name="delete_staff" 
+                                                class="btn btn-sm btn-danger d-flex align-items-center">
+                                            <i class="fas fa-trash-alt me-1"></i>
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         <?php
@@ -189,6 +214,10 @@
 <script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
+function confirmDelete() {
+    return confirm("Are you sure you want to delete this staff member? This action cannot be undone.");
+}
+
 $(document).ready(function() {
     $('#staffTable').DataTable({
         dom: '<"row mb-3"<"col-md-6"f><"col-md-4 text-end"l><"col-md-2 text-end add-staff-button">>rtip',

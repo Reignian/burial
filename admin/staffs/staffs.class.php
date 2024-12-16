@@ -12,7 +12,7 @@ class Staffs_class {
     function showALL_staff() {
         $sql = "SELECT *, CASE WHEN is_banned = 1 THEN 'Banned' ELSE 'Active' END as status 
                 FROM account 
-                WHERE is_staff = 1";
+                WHERE is_staff = 1 AND is_deleted = 0";
         $query = $this->db->connect()->prepare($sql);
         $data = null;
 
@@ -90,5 +90,30 @@ class Staffs_class {
         }
 
         return $data;
+    }
+
+    function deleteStaff($account_id) {
+        try {
+            $sql = "UPDATE account SET is_deleted = 1 WHERE account_id = :account_id AND is_staff = 1";
+            $query = $this->db->connect()->prepare($sql);
+            $query->bindParam(':account_id', $account_id, PDO::PARAM_INT);
+            
+            if ($query->execute()) {
+                // Get staff details for logging
+                $staffSql = "SELECT CONCAT(first_name, ' ', last_name) as full_name FROM account WHERE account_id = :account_id";
+                $staffQuery = $this->db->connect()->prepare($staffSql);
+                $staffQuery->bindParam(':account_id', $account_id, PDO::PARAM_INT);
+                $staffQuery->execute();
+                $staff = $staffQuery->fetch();
+                
+                // Add to staff log
+                $this->addStaffLog($_SESSION['account']['account_id'], "Deleted staff account", "Staff: " . $staff['full_name']);
+                return true;
+            }
+            return false;
+        } catch (PDOException $e) {
+            error_log("Error deleting staff: " . $e->getMessage());
+            return false;
+        }
     }
 }

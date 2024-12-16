@@ -21,6 +21,7 @@
                     <thead>
                         <tr>
                             <th>No.</th>
+                            <th>Username</th>
                             <th>Name</th>
                             <th>Email</th>
                             <th>Phone Number</th>
@@ -35,6 +36,7 @@
                         ?>
                         <tr>
                             <td class="text-center"><?= $i ?></td>
+                            <td><?= $cusarr['username'] ?></td>
                             <td><?= $cusarr['last_name'] ?>, <?= $cusarr['first_name'] ?></td>
                             <td><?= $cusarr['email'] ?></td>
                             <td class="text-center"><?= $cusarr['phone_number'] ?></td>
