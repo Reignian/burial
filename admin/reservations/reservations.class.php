@@ -686,4 +686,91 @@ class Reservation_class{
         $query->execute();
         return $query->fetchAll();
     }
+
+    function getFullReservationDetails($reservation_id) {
+        try {
+            error_log("Starting getFullReservationDetails for ID: " . $reservation_id);
+            
+            // Get basic reservation details
+            $sql = "SELECT 
+                    r.reservation_id,
+                    r.reservation_date,
+                    r.monthly_payment,
+                    r.balance,
+                    r.request,
+                    pp.plan,
+                    a.first_name,
+                    a.middle_name,
+                    a.last_name,
+                    a.email,
+                    a.phone_number,
+                    l.lot_name,
+                    l.location,
+                    l.size,
+                    l.price
+                    FROM reservation r 
+                    LEFT JOIN payment_plan pp ON r.payment_plan_id = pp.payment_plan_id
+                    LEFT JOIN account a ON r.account_id = a.account_id
+                    LEFT JOIN lots l ON r.lot_id = l.lot_id
+                    WHERE r.reservation_id = :reservation_id";
+            
+            error_log("Executing main query: " . $sql);
+            
+            $db = $this->db->connect();
+            $query = $db->prepare($sql);
+            $query->bindParam(':reservation_id', $reservation_id, PDO::PARAM_INT);
+            
+            if ($query->execute()) {
+                $details = $query->fetch(PDO::FETCH_ASSOC);
+                
+                if ($details) {
+                    error_log("Found basic reservation details");
+                    
+                    // Get all payments
+                    $sql = "SELECT 
+                            p.payment_id,
+                            p.payment_date,
+                            p.amount_paid as amount
+                            FROM payment p 
+                            WHERE p.reservation_id = :reservation_id 
+                            ORDER BY p.payment_date DESC";
+                    
+                    error_log("Executing payments query");
+                    
+                    $query = $db->prepare($sql);
+                    $query->bindParam(':reservation_id', $reservation_id, PDO::PARAM_INT);
+                    
+                    if ($query->execute()) {
+                        $payments = $query->fetchAll(PDO::FETCH_ASSOC);
+                        error_log("Found " . count($payments) . " payments");
+                        
+                        $details['payments'] = $payments;
+                        $details['payment_status'] = 'Fully Paid';
+                        
+                        error_log("Successfully compiled all details");
+                        return $details;
+                    } else {
+                        error_log("Failed to execute payments query");
+                        throw new Exception("Failed to fetch payment details");
+                    }
+                } else {
+                    error_log("No reservation found with ID: " . $reservation_id);
+                    return null;
+                }
+            } else {
+                error_log("Failed to execute main query");
+                throw new Exception("Failed to fetch reservation details");
+            }
+        } catch (PDOException $e) {
+            $error_message = "Database error in getFullReservationDetails: " . $e->getMessage() . "\n" . 
+                           "Stack trace: " . $e->getTraceAsString();
+            error_log($error_message);
+            throw $e;
+        } catch (Exception $e) {
+            $error_message = "Error in getFullReservationDetails: " . $e->getMessage() . "\n" . 
+                           "Stack trace: " . $e->getTraceAsString();
+            error_log($error_message);
+            throw $e;
+        }
+    }
 }

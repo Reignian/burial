@@ -103,11 +103,14 @@
                                                    class="btn btn-sm btn-info d-flex align-items-center text-white">
                                                     <i class="fas fa-exchange-alt me-1"></i> Transfer
                                                 </a>
+                                            
                                             <?php else: ?>
-                                                <a href="" class="btn btn-sm btn-info d-flex align-items-center">
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-info d-flex align-items-center text-white"
+                                                        onclick="showReservationDetails(<?= $resarr['reservation_id'] ?>)">
                                                     <i class="fas fa-info-circle me-1"></i> Details
-                                                </a>
-                                            <?php endif; ?>
+                                                </button>
+                                            <?php endif; ?>   
                                             
                                             <?php if (!$hasPayments): ?>
                                                 <button type="button" 
@@ -242,6 +245,83 @@ function showCancellationModal(reservationId, accountName, reservationDate, bala
         (balance > 0 ? `<br><br><strong>Note:</strong> This reservation has a remaining balance of ₱${balance.toLocaleString()}.` : '');
     modal.show();
     return false;
+}
+
+function showReservationDetails(reservationId) {
+    // Show loading state
+    const modal = new bootstrap.Modal(document.getElementById('reservationDetailsModal'));
+    modal.show();
+    
+    // Use relative path from current location
+    fetch(`./reservations/get_reservation_details.php?reservation_id=${reservationId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data) {
+                // Customer Information
+                document.getElementById('customerName').textContent = 
+                    `${data.first_name} ${data.middle_name ? data.middle_name + ' ' : ''}${data.last_name}`.trim();
+                document.getElementById('customerEmail').textContent = data.email || 'N/A';
+                document.getElementById('customerPhone').textContent = data.phone_number || 'N/A';
+
+                // Lot Information
+                document.getElementById('lotName').textContent = data.lot_name || 'N/A';
+                document.getElementById('lotLocation').textContent = data.location || 'N/A';
+                document.getElementById('lotSize').textContent = data.size ? data.size + ' sq. m.' : 'N/A';
+                document.getElementById('lotPrice').textContent = 
+                    '₱' + parseFloat(data.price).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+                // Payment Information
+                document.getElementById('paymentPlan').textContent = 
+                    `${data.plan || 'N/A'} (${data.months || 0} months)`;
+                document.getElementById('monthlyPayment').textContent = 
+                    '₱' + parseFloat(data.monthly_payment).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('balance').textContent = 
+                    '₱' + parseFloat(data.balance).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('paymentStatus').textContent = data.payment_status || 'N/A';
+
+                // Reservation Information
+                document.getElementById('reservationDate').textContent = 
+                    new Date(data.reservation_date).toLocaleDateString('en-PH', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+
+                // Payment History
+                const paymentHistoryBody = document.getElementById('paymentHistoryBody');
+                paymentHistoryBody.innerHTML = ''; // Clear existing rows
+                
+                if (data.payments && data.payments.length > 0) {
+                    data.payments.forEach(payment => {
+                        const row = document.createElement('tr');
+                        const paymentDate = new Date(payment.payment_date).toLocaleDateString('en-PH', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
+                        row.innerHTML = `
+                            <td>${paymentDate}</td>
+                            <td>₱${parseFloat(payment.amount).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        `;
+                        paymentHistoryBody.appendChild(row);
+                    });
+                } else {
+                    const row = document.createElement('tr');
+                    row.innerHTML = '<td colspan="2" class="text-center">No payment history available</td>';
+                    paymentHistoryBody.appendChild(row);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while loading the reservation details');
+            modal.hide();
+        });
 }
 </script>
 
@@ -615,6 +695,68 @@ span[style*="color: orange"] {
                     <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reservation Details Modal -->
+<div class="modal fade" id="reservationDetailsModal" tabindex="-1" aria-labelledby="reservationDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reservationDetailsModalLabel">Reservation Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5 class="text-muted mb-3">Customer Information</h5>
+                        <p><strong>Name:</strong> <span id="customerName"></span></p>
+                        <p><strong>Email:</strong> <span id="customerEmail"></span></p>
+                        <p><strong>Phone:</strong> <span id="customerPhone"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="text-muted mb-3">Lot Information</h5>
+                        <p><strong>Lot Name:</strong> <span id="lotName"></span></p>
+                        <p><strong>Location:</strong> <span id="lotLocation"></span></p>
+                        <p><strong>Size:</strong> <span id="lotSize"></span></p>
+                        <p><strong>Price:</strong> <span id="lotPrice"></span></p>
+                    </div>
+                </div>
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5 class="text-muted mb-3">Payment Information</h5>
+                        <p><strong>Monthly Payment:</strong> <span id="monthlyPayment"></span></p>
+                        <p><strong>Balance:</strong> <span id="balance"></span></p>
+                        <p><strong>Status:</strong> <span id="paymentStatus"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="text-muted mb-3">Reservation Information</h5>
+                        <p><strong>Reservation Date:</strong> <span id="reservationDate"></span></p>
+                        <p><strong>Payment Plan:</strong> <span id="paymentPlan"></span></p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <h5 class="text-muted mb-3">Payment History</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="paymentHistoryBody" style="text-align: center;">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>

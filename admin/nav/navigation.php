@@ -254,8 +254,12 @@
     <?php endif; ?>
 
     <div class="sidebar-header">
-        <h3><?= $_SESSION['account']['first_name'], ' ', $_SESSION['account']['middle_name'], ' ', $_SESSION['account']['last_name']?></h3>
-        <span><a href="#" data-bs-toggle="modal" data-bs-target="#editAccountModal" style="color: inherit;"><i class="fas fa-pencil"></i></a></span>
+        <h3 style="display: inline-block;">
+            <?= $_SESSION['account']['first_name'], ' ', $_SESSION['account']['middle_name'], ' ', $_SESSION['account']['last_name']?>
+            <a href="#" data-bs-toggle="modal" data-bs-target="#editAccountModal" style="color: inherit; text-decoration: none;">
+                <i class="fas fa-pencil" style="font-size: 12px;"></i>
+            </a>
+        </h3>
     </div>
     <ul class="sidebar-menu">
         <li><a href="dashboard.php" id="dashboard-link" class="nav-link"><i class="fas fa-tachometer-alt icon"></i><span class="menu-text">Dashboard</span></a></li>
