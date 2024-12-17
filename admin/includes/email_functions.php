@@ -73,7 +73,7 @@ function sendReservationSummaryEmail($details) {
 
         $body .= '<div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 5px;">';
         $body .= '<h4>Thank You!</h4>';
-        $body .= '<p>Thank you for choosing Sto. Niño Parish Cemetery. We appreciate your trust in our services.</p>';
+        $body .= '<p>Thank you for choosing Sto. Nino Parish Cemetery. We appreciate your trust in our services.</p>';
         $body .= '<p>If you have any questions or concerns, please don\'t hesitate to contact us:</p>';
         $body .= '<ul>';
         $body .= '<li>Email: stoninoparishcemetery@gmail.com</li>';

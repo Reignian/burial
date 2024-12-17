@@ -29,7 +29,7 @@
                     <ul>
                         <li class="lotname"><?= $lotarr['lot_name'] ?></li>
                         <li class="location"><?= $lotarr['location'] ?></li>
-                        <li class="size"><?= $lotarr['size'] ?> m²</li>
+                        <li class="size"><?= $lotarr['size'] ?> sqm.</li>
                         <li class="price">₱ <?= $lotarr['price'] ?></li>
                         <li class="description"><?= $description ?></li>
                     </ul>

@@ -45,7 +45,7 @@
                             </td>
                             <td><?= $lotarr['lot_name'] ?></td>
                             <td><?= $lotarr['location'] ?></td>
-                            <td><?= $lotarr['size'] ?></td>
+                            <td><?= $lotarr['size'] ?> sqm.</td>
                             <td>₱<?= number_format($lotarr['price'], 2) ?></td>
                             <td>
                                 <span class="status-badge <?= strtolower($lotarr['status']) ?>">
