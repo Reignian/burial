@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 15, 2024 at 11:56 AM
+-- Generation Time: Dec 17, 2024 at 06:17 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -64,8 +64,8 @@ INSERT INTO `about_2` (`id`, `card_icon`, `card_title`, `card_text`) VALUES
 (1, 'fas fa-heart', 'Compassion', 'We provide caring and understanding service to families during their time of loss, ensuring dignity and respect in every interaction.'),
 (2, 'fas fa-hands-helping', 'Service', 'Our dedicated team is committed to maintaining a beautiful and peaceful environment while providing professional assistance to all visitors.'),
 (3, 'fas fa-cross', 'Faith', 'We honor our Catholic heritage while welcoming all faiths, fostering a sacred space for prayer and remembrance.'),
-(4, 'fas fa-map-marked-alt', 'Burial Lots', '• Family Estates <br><br>\r\n• Individual Plots <br><br>\r\n• Memorial Gardens <br><br>\r\n• Cremation Spaces'),
-(5, 'fas fa-hands', 'Additional Services', '• Memorial Services<br><br>\r\n• Maintenance Programs<br><br>\r\n• Family Assistance<br><br>\r\n• Documentation Support<br><br>');
+(4, 'fas fa-map-marked-alt', 'Burial Lots', '• Family Estates\r\n• Individual Plots\r\n• Memorial Gardens\r\n• Cremation Spaces'),
+(5, 'fas fa-hands', 'Additional Services', '• Memorial Services\r\n• Maintenance Programs\r\n• Family Assistance\r\n• Documentation Support');
 
 -- --------------------------------------------------------
 
@@ -84,7 +84,7 @@ CREATE TABLE `about_main` (
 --
 
 INSERT INTO `about_main` (`id`, `image`, `text`) VALUES
-(1, 'assets/images/slide2.jpg', 'Founded in [Year], Sto. Niño Parish Cemetery has served as a sacred resting place for generations of families in our community. Our cemetery stands as a testament to the rich history and enduring faith of our parish.\r\n<br>\r\n<br>\r\nOver the years, we have grown and evolved while maintaining our commitment to providing a peaceful and dignified environment for remembrance and reflection.');
+(1, 'assets/images/history.jpg', 'Founded in 1970, Sto. Niño Parish Cemetery has served as a sacred resting place for generations of families in our community. Nestled in serene surroundings, the cemetery reflects the enduring faith and cherished traditions of our parish, offering a place of solace and connection for those honoring their loved ones.\r\n\r\nOver the years, we have grown and evolved while maintaining our unwavering commitment to providing a peaceful and dignified environment for remembrance and reflection. With thoughtfully maintained grounds, a strong focus on heritage preservation, and compassionate support for grieving families, Sto. Niño Parish Cemetery remains a cornerstone of our community’s spiritual and historical legacy.\r\n\r\n');
 
 -- --------------------------------------------------------
 
@@ -104,9 +104,9 @@ CREATE TABLE `about_team` (
 --
 
 INSERT INTO `about_team` (`id`, `image`, `name`, `position`) VALUES
-(1, 'assets/images/image.jpg', 'Fr. [Name]', 'Parish Priest'),
-(2, 'assets/images/image.jpg', 'Fr. [Name]', 'Cemetery Manager'),
-(3, 'assets/images/image.jpg', 'Fr. [Name]', 'Customer Service');
+(1, 'assets/images/father.webp', 'Fr. Elmer L. Roque', 'Parish Priest'),
+(2, 'assets/images/rosalia.jpg', 'Rosalia S. Abenido', 'Cemetery Manager'),
+(3, 'assets/images/mary.jpg', 'Mary Jane Dela Cruz', 'Customer Service');
 
 -- --------------------------------------------------------
 
@@ -124,6 +124,7 @@ CREATE TABLE `account` (
   `email` varchar(255) DEFAULT NULL,
   `phone_number` varchar(20) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `is_customer` tinyint(1) NOT NULL DEFAULT 0,
   `is_staff` tinyint(1) NOT NULL DEFAULT 0,
   `is_admin` tinyint(1) NOT NULL DEFAULT 0,
@@ -137,15 +138,11 @@ CREATE TABLE `account` (
 -- Dumping data for table `account`
 --
 
-INSERT INTO `account` (`account_id`, `username`, `password`, `first_name`, `middle_name`, `last_name`, `email`, `phone_number`, `created_at`, `is_customer`, `is_staff`, `is_admin`, `is_banned`, `is_deleted`, `reset_token`, `reset_token_expiry`) VALUES
-(8, 'admin', '$2y$10$N0qDeYTcgKNeSHCIqFb/cupIQPBV5g2SNtDVb7FlT1EfqVNYdk6C2', 'admin', '', 'admin', 'admin@gmail.com', '09991234567', '2024-10-12 14:11:57', 0, 0, 1, 0, 0, NULL, NULL),
-(9, 'reign', '$2y$10$cliEw.S4Tq7vLAU0n/TjhusXoNyW6ZLVNe//K7wWK53jWYTLKqqv6', 'Reign Ian', 'Carreon', 'Magno', 'reign@gmail.com', '09123456789', '2024-10-12 14:16:13', 1, 0, 0, 0, 0, NULL, NULL),
-(12, 'staff', '$2y$10$vcHUVbLyqVKgkUcTHpa.jurg9AOmE5zGzFrNfKFkxMslXDnUlGmC.', 'staff', 'staff', 'staff', 'moonarcheye@gmail.com', '09752441070', '2024-12-13 20:51:55', 0, 1, 0, 0, 0, NULL, NULL),
-(13, 'staff2', '$2y$10$6DsqfnmpIPt9q6/5Nbfn9eTiBaTlUoXRulY36qorKaxQCM7w3/p5W', 'staff2', 'staff2', 'staff2', 'moonarcheye@gmail.com', '09752441070', '2024-12-13 21:15:13', 0, 1, 0, 0, 0, NULL, NULL),
-(14, 'staff22', '$2y$10$8wFUkXwDvnBh6hyvKhwHH.RytIjDizuld1Vms2Kr.Z2rVTrusNlpK', 'staff2', 'staff2', 'staff2', 'moonarcheye@gmail.com', '09123456789', '2024-12-13 21:37:42', 0, 1, 0, 0, 0, NULL, NULL),
-(15, 'jamal', '$2y$10$GEQscVOa6QgppRKwJy6YNOsqlB067r3bGgpeUEOEG3QmuJKdbGRsG', 'jamal', 'al', 'badi', 'jamalalbadi03@gmail.com', '09752441070', '2024-12-14 09:15:55', 1, 0, 0, 0, 0, NULL, NULL),
-(18, 'haha', '$2y$10$4qYksx5yXEtKKuqg4uaOR.dIBrDkm0iD4ucBCYiEtSxnhx7mADL26', 'haha', 'haha', 'haha', 'reignianc.magno@gmail.com', '09752441070', '2024-12-14 09:39:48', 1, 0, 0, 0, 0, NULL, NULL),
-(19, 'aaaa', '$2y$10$8g3ckbeSyIhZouPH0xcuf.Tseh/lfzgEB1SU7qoHRBlKTv8dYW1Se', 'aaaa', 'aaaa', 'aaaa', 'reignianc.magno@gmail.comaqqqqqqqqqqqqqqqqqqq', '09752441070', '2024-12-14 17:18:46', 1, 0, 0, 0, 0, NULL, NULL);
+INSERT INTO `account` (`account_id`, `username`, `password`, `first_name`, `middle_name`, `last_name`, `email`, `phone_number`, `created_at`, `updated_at`, `is_customer`, `is_staff`, `is_admin`, `is_banned`, `is_deleted`, `reset_token`, `reset_token_expiry`) VALUES
+(1, 'admin', '$2y$10$xEbCA7dBAxshPGfPsUjPjOeCWx/yvdQ4S7RqeZh3ZBz1XDmhejn6u', 'admin', '', 'admin', 'stoninoparishcemetery@gmail.com', '09991234567', '2024-10-12 14:11:57', '2024-12-17 15:33:55', 0, 0, 1, 0, 0, NULL, NULL),
+(2, 'reign', '$2y$10$1QHbZfc.zg2TfV4RcheypOpFwI7k7GUVCyHmaOzK/FmuMeiyk4PL2', 'Reign Ian', 'Carreon', 'Magno', 'reignianc.magno@gmail.com', '09123456789', '2024-10-12 14:16:13', '2024-12-17 15:34:02', 1, 0, 0, 0, 0, NULL, NULL),
+(3, 'moonarch', '$2y$10$/n4BBRZUoaTLGFaZR8a3JuQ4Wh/Q8M.Xct7ezGXdPnhxvXfjB9NBS', 'moonarch', '', 'eye', 'reignianc.magno2@gmail.com', '09752441070', '2024-12-15 19:08:34', '2024-12-17 15:34:10', 0, 1, 0, 0, 0, NULL, NULL),
+(40, 'jamal', '$2y$10$km.7j1ywRo3AZ3mCABn2He4oERwtU61PfPIlkj7zksMNkLjxngEV.', 'jamal', 'alumbre', 'albadi', 'reigniancarreonmagno@gmail.com', '09998065631', '2024-12-17 15:37:06', '2024-12-17 15:37:06', 1, 0, 0, 0, 0, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -165,7 +162,7 @@ CREATE TABLE `contact` (
 --
 
 INSERT INTO `contact` (`id`, `phone`, `email`, `address`) VALUES
-(1, '+1234567890', 'info@example.com', 'Cemetery Address Here');
+(1, '(+63) 975-244-1070', 'stoninoparishcemetery@gmail.com', 'Brgy. Tabid, Ozamiz City, Misamis Occidental, Philippines 7200');
 
 -- --------------------------------------------------------
 
@@ -191,7 +188,51 @@ CREATE TABLE `lots` (
 --
 
 INSERT INTO `lots` (`lot_id`, `lot_name`, `location`, `size`, `price`, `lot_image`, `status`, `description`, `is_deleted`, `created_at`) VALUES
-(20, 'lot 1', 'block 1', '25', 1000.00, 'lots_images/Picsart_24-09-07_13-38-44-738.jpg', 'Available', 'a', 0, '2024-12-12 20:06:03');
+(26, 'Lot 1', 'Block 1', '25', 100000.00, 'lots_images/single.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 15:55:41'),
+(28, 'Lot 2', 'Block 1', '25', 100000.00, 'lots_images/single_1.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 16:05:58'),
+(29, 'Lot 3', 'Block 1', '25', 100000.00, 'lots_images/single_2.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 16:06:22'),
+(30, 'Lot 4', 'Block 1', '25', 100000.00, 'lots_images/single_3.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 16:06:33'),
+(31, 'Lot 5', 'Block 1', '25', 100000.00, 'lots_images/single_5.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 16:06:52'),
+(32, 'Lot 6', 'Block 1', '25', 100000.00, 'lots_images/single_6.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 16:07:34'),
+(33, 'Lot 7', 'Block 1', '25', 100000.00, 'lots_images/single_7.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 16:07:49'),
+(34, 'Lot 8', 'Block 1', '25', 100000.00, 'lots_images/single_8.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 16:08:04'),
+(35, 'Lot 9', 'Block 1', '25', 100000.00, 'lots_images/single_9.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 16:08:18'),
+(36, 'Lot 10', 'Block 1', '25', 100000.00, 'lots_images/single_10.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 16:09:20'),
+(37, 'Lot 11', 'Block 2', '25', 100000.00, 'lots_images/single2.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 16:21:19'),
+(38, 'Lot 12', 'Block 2', '25', 100000.00, 'lots_images/single2_1.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 16:22:22'),
+(39, 'Lot 13', 'Block 2', '25', 100000.00, 'lots_images/single2_2.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 16:22:32'),
+(40, 'Lot 14', 'Block 2', '25', 100000.00, 'lots_images/single2_3.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 16:22:42'),
+(41, 'Lot 15', 'Block 2', '25', 100000.00, 'lots_images/single2_4.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 16:22:50'),
+(42, 'Lot 16', 'Block 2', '25', 100000.00, 'lots_images/single2_5.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 16:23:00'),
+(43, 'Lot 17', 'Block 2', '25', 100000.00, 'lots_images/single2_6.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 16:23:11'),
+(44, 'Lot 18', 'Block 2', '25', 100000.00, 'lots_images/single2_7.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 16:23:21'),
+(45, 'Lot 19', 'Block 2', '25', 100000.00, 'lots_images/single2_8.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 16:23:30'),
+(46, 'Lot 20', 'Block 2', '25', 100000.00, 'lots_images/single2_9.jpg', 'Available', 'Standard-sized burial plot that accommodates a single casket or interment. Design is simple and uniform, focusing on maintaining a clean, flat lawn appearance with minimal surface structures.', 0, '2024-12-17 16:23:40'),
+(47, 'Lot 21', 'Block 3', '50', 200000.00, 'lots_images/double.jpg', 'Available', 'A double-size burial lot designed to accommodate two interments, typically for couples or family members. It maintains the clean, flat appearance characteristic of lawn cemeteries.', 0, '2024-12-17 16:27:10'),
+(48, 'lot 22', 'Block 3', '50', 200000.00, 'lots_images/double_1.jpg', 'Available', 'A double-size burial lot designed to accommodate two interments, typically for couples or family members. It maintains the clean, flat appearance characteristic of lawn cemeteries.', 0, '2024-12-17 16:28:47'),
+(49, 'Lot 23', 'Block 3', '50', 200000.00, 'lots_images/double_2.jpg', 'Available', 'A double-size burial lot designed to accommodate two interments, typically for couples or family members. It maintains the clean, flat appearance characteristic of lawn cemeteries.', 0, '2024-12-17 16:29:46'),
+(50, 'Lot 24', 'Block 3', '50', 200000.00, 'lots_images/double_3.jpg', 'Available', 'A double-size burial lot designed to accommodate two interments, typically for couples or family members. It maintains the clean, flat appearance characteristic of lawn cemeteries.', 0, '2024-12-17 16:30:07'),
+(51, 'Lot 25', 'Block 3', '50', 200000.00, 'lots_images/double_4.jpg', 'Available', 'A double-size burial lot designed to accommodate two interments, typically for couples or family members. It maintains the clean, flat appearance characteristic of lawn cemeteries.', 0, '2024-12-17 16:30:20'),
+(54, 'Lot 26', 'Block 3', '50', 200000.00, 'lots_images/double2.jpg', 'Available', 'A double-size burial lot designed to accommodate two interments, typically for couples or family members. It maintains the clean, flat appearance characteristic of lawn cemeteries.', 0, '2024-12-17 16:33:21'),
+(55, 'Lot 27', 'Block 3', '50', 200000.00, 'lots_images/double2_1.jpg', 'Available', 'A double-size burial lot designed to accommodate two interments, typically for couples or family members. It maintains the clean, flat appearance characteristic of lawn cemeteries.', 0, '2024-12-17 16:33:34'),
+(56, 'Lot 28', 'Block 3', '50', 200000.00, 'lots_images/double2_2.jpg', 'Available', 'A double-size burial lot designed to accommodate two interments, typically for couples or family members. It maintains the clean, flat appearance characteristic of lawn cemeteries.', 0, '2024-12-17 16:33:51'),
+(57, 'Lot 29', 'Block 3', '50', 200000.00, 'lots_images/double2_3.jpg', 'Available', 'A double-size burial lot designed to accommodate two interments, typically for couples or family members. It maintains the clean, flat appearance characteristic of lawn cemeteries.', 0, '2024-12-17 16:35:19'),
+(58, 'Lot 30', 'Block 3', '50', 200000.00, 'lots_images/double2_4.jpg', 'Available', 'A double-size burial lot designed to accommodate two interments, typically for couples or family members. It maintains the clean, flat appearance characteristic of lawn cemeteries.', 0, '2024-12-17 16:35:30'),
+(59, 'Lot 31', 'Block 3', '50', 200000.00, 'lots_images/lot.jpg', 'Available', 'A double-size burial lot designed to accommodate two interments, typically for couples or family members. It maintains the clean, flat appearance characteristic of lawn cemeteries.', 0, '2024-12-17 16:35:51'),
+(60, 'Lot 32', 'Block 3', '50', 200000.00, 'lots_images/lot_1.jpg', 'Available', 'A double-size burial lot designed to accommodate two interments, typically for couples or family members. It maintains the clean, flat appearance characteristic of lawn cemeteries.', 0, '2024-12-17 16:36:01'),
+(61, 'Lot 33', 'Block 3', '50', 200000.00, 'lots_images/lot_2.jpg', 'Available', 'A double-size burial lot designed to accommodate two interments, typically for couples or family members. It maintains the clean, flat appearance characteristic of lawn cemeteries.', 0, '2024-12-17 16:36:10'),
+(62, 'Lot 34', 'Block 3', '50', 200000.00, 'lots_images/lot_3.jpg', 'Available', 'A double-size burial lot designed to accommodate two interments, typically for couples or family members. It maintains the clean, flat appearance characteristic of lawn cemeteries.', 0, '2024-12-17 16:36:19'),
+(63, 'Lot 35', 'Block 3', '50', 200000.00, 'lots_images/lot_4.jpg', 'Available', 'A double-size burial lot designed to accommodate two interments, typically for couples or family members. It maintains the clean, flat appearance characteristic of lawn cemeteries.', 0, '2024-12-17 16:36:27'),
+(64, 'Lot 36', 'Block 3', '100', 500000.00, 'lots_images/big.jpg', 'Available', 'A family-size burial lot is a larger plot designed to accommodate multiple interments for family members, maintaining the clean and uniform lawn appearance. The lot can accommodate multiple graves side-by-side or utilize double-depth burials for space efficiency.', 0, '2024-12-17 16:43:41'),
+(65, 'Lot 37', 'Block 3', '100', 500000.00, 'lots_images/big_2.jpg', 'Available', 'A family-size burial lot is a larger plot designed to accommodate multiple interments for family members, maintaining the clean and uniform lawn appearance. The lot can accommodate multiple graves side-by-side or utilize double-depth burials for space efficiency.', 0, '2024-12-17 16:44:30'),
+(66, 'Lot 38', 'Block 3', '100', 500000.00, 'lots_images/big_4.jpg', 'Available', 'A family-size burial lot is a larger plot designed to accommodate multiple interments for family members, maintaining the clean and uniform lawn appearance. The lot can accommodate multiple graves side-by-side or utilize double-depth burials for space efficiency.', 0, '2024-12-17 16:45:12'),
+(67, 'Lot 39', 'Block 3', '100', 500000.00, 'lots_images/big_5.jpg', 'Available', 'A family-size burial lot is a larger plot designed to accommodate multiple interments for family members, maintaining the clean and uniform lawn appearance. The lot can accommodate multiple graves side-by-side or utilize double-depth burials for space efficiency.', 0, '2024-12-17 16:45:36'),
+(68, 'Lot 40', 'Block 3', '100', 500000.00, 'lots_images/big_6.jpg', 'Available', 'A family-size burial lot is a larger plot designed to accommodate multiple interments for family members, maintaining the clean and uniform lawn appearance. The lot can accommodate multiple graves side-by-side or utilize double-depth burials for space efficiency.', 0, '2024-12-17 16:45:48'),
+(69, 'Lot 41', 'Block 4', '100', 1000000.00, 'lots_images/mausoleum.jpg', 'Available', 'A mausoleum crypt refers to a burial space within a mausoleum, which is an above-ground structure designed to house the remains of individuals or families. Mausoleum crypts are ideal for those seeking an alternative to in-ground burials and often carry an air of tradition, prestige, and permanence.', 0, '2024-12-17 16:49:13'),
+(70, 'Lot 42', 'Block 4', '100', 1000000.00, 'lots_images/mausoleum_1.jpg', 'Available', 'A mausoleum crypt refers to a burial space within a mausoleum, which is an above-ground structure designed to house the remains of individuals or families. Mausoleum crypts are ideal for those seeking an alternative to in-ground burials and often carry an air of tradition, prestige, and permanence.', 0, '2024-12-17 16:50:24'),
+(71, 'Lot 43', 'Block 5', '100', 1500000.00, 'lots_images/mau.jpg', 'Available', 'A mausoleum crypt refers to a burial space within a mausoleum, which is an above-ground structure designed to house the remains of individuals or families. Mausoleum crypts are ideal for those seeking an alternative to in-ground burials and often carry an air of tradition, prestige, and permanence.', 0, '2024-12-17 16:55:21'),
+(72, 'Lot 44', 'Block 5', '100', 2500000.00, 'lots_images/modernmau.jpg', 'Available', 'A mausoleum crypt refers to a burial space within a mausoleum, which is an above-ground structure designed to house the remains of individuals or families. Mausoleum crypts are ideal for those seeking an alternative to in-ground burials and often carry an air of tradition, prestige, and permanence.', 0, '2024-12-17 16:55:56'),
+(73, 'Lot 45', 'Block 5', '100', 2500000.00, 'lots_images/mau2.jpg', 'Available', 'A mausoleum crypt refers to a burial space within a mausoleum, which is an above-ground structure designed to house the remains of individuals or families. Mausoleum crypts are ideal for those seeking an alternative to in-ground burials and often carry an air of tradition, prestige, and permanence.', 0, '2024-12-17 16:56:07');
 
 -- --------------------------------------------------------
 
@@ -246,8 +287,7 @@ INSERT INTO `payment_plan` (`payment_plan_id`, `plan`, `duration`, `down_payment
 (1, 'Spot Cash', 0, 0, 0, 0),
 (2, '12 months installment', 12, 20, 0, 0),
 (3, '24 months installment', 24, 20, 0, 0),
-(4, '3 years installment', 48, 0, 10, 0),
-(5, 'qq', 12, 30, 10, 0);
+(4, '3 years installment', 48, 0, 10, 0);
 
 -- --------------------------------------------------------
 
@@ -320,9 +360,10 @@ CREATE TABLE `pubmat_2` (
 --
 
 INSERT INTO `pubmat_2` (`id`, `image`, `heading`, `text`) VALUES
-(1, 'assets/images/slide2.jpg', 'Lawn Lot', 'Peaceful garden setting with well-maintained grounds.'),
-(2, 'assets/images/slide2.jpg', 'Garden Lot', 'Beautiful garden lots with scenic views.'),
-(3, 'assets/images/slide2.jpg', 'Family Estate', 'Spacious family estates for generations to come.');
+(1, 'assets/images/display4.jpg', 'Single Lot', 'Basic and affordable burial lot designed to accommodate one casket. \r\n\r\nLocated within designated row sections at garden lawn.'),
+(2, 'assets/images/display2.jpg', 'Companion Lot', 'A burial lot designed for two individuals, perfect for spouses or family members.\r\n\r\nSide-by-side orientation within the garden lawn.\r\n'),
+(3, 'assets/images/display5.jpg', 'Family Estate', 'Larger lots designed to accommodate multiple family members.\r\n\r\nProvides a dedicated area for an entire family’s legacy.'),
+(4, 'assets/images/display3.jpg', 'Mausoleum Crypt', 'Above-ground burial within a mausoleum structure.\r\n\r\nOffers an alternative to in-ground burial, appealing to those seeking entombment.');
 
 -- --------------------------------------------------------
 
@@ -498,7 +539,7 @@ ALTER TABLE `about_team`
 -- AUTO_INCREMENT for table `account`
 --
 ALTER TABLE `account`
-  MODIFY `account_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `account_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `contact`
@@ -510,19 +551,19 @@ ALTER TABLE `contact`
 -- AUTO_INCREMENT for table `lots`
 --
 ALTER TABLE `lots`
-  MODIFY `lot_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `lot_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=204;
+  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=961;
 
 --
 -- AUTO_INCREMENT for table `payment`
 --
 ALTER TABLE `payment`
-  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=127;
+  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=163;
 
 --
 -- AUTO_INCREMENT for table `payment_plan`
@@ -540,7 +581,7 @@ ALTER TABLE `penalty`
 -- AUTO_INCREMENT for table `penalty_log`
 --
 ALTER TABLE `penalty_log`
-  MODIFY `penalty_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
+  MODIFY `penalty_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=161;
 
 --
 -- AUTO_INCREMENT for table `pubmat_1`
@@ -552,19 +593,19 @@ ALTER TABLE `pubmat_1`
 -- AUTO_INCREMENT for table `pubmat_2`
 --
 ALTER TABLE `pubmat_2`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `reservation`
 --
 ALTER TABLE `reservation`
-  MODIFY `reservation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=92;
+  MODIFY `reservation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
 
 --
 -- AUTO_INCREMENT for table `staff_logs`
 --
 ALTER TABLE `staff_logs`
-  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=71;
+  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=347;
 
 --
 -- Constraints for dumped tables
