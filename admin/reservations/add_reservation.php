@@ -61,6 +61,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':phone_number' => $_POST['phone_number']
             ]);
             $account_id = $db->connect()->lastInsertId();
+
+            // Log new account creation
+            $log_details = sprintf(
+                "Created new account for reservation:\nName: %s %s %s\nEmail: %s\nPhone: %s",
+                $_POST['first_name'],
+                $_POST['middle_name'],
+                $_POST['last_name'],
+                $_POST['email'],
+                $_POST['phone_number']
+            );
+            
+            $sql = "INSERT INTO staff_logs (staff_id, action, details) 
+                    VALUES (:staff_id, 'Create Account', :details)";
+            $query = $db->connect()->prepare($sql);
+            $query->execute([
+                ':staff_id' => $_SESSION['account']['account_id'],
+                ':details' => $log_details
+            ]);
             
             // Store credentials to show later
             $_SESSION['temp_credentials'] = [
@@ -75,11 +93,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $existing_account = reset($existing_account);
         }
 
-        // Get lot price
-        $sql = "SELECT price FROM lots WHERE lot_id = :lot_id";
+        // Get lot details
+        $sql = "SELECT * FROM lots WHERE lot_id = :lot_id";
         $query = $db->connect()->prepare($sql);
         $query->execute([':lot_id' => $_POST['lot_id']]);
-        $lot_price = $query->fetchColumn();
+        $lot_details = $query->fetch(PDO::FETCH_ASSOC);
 
         // Get payment plan details
         $sql = "SELECT * FROM payment_plan WHERE payment_plan_id = :payment_plan_id";
@@ -91,13 +109,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $down_payment_percentage = $payment_plan['down_payment'] / 100;
         $interest_rate = $payment_plan['interest_rate'] / 100;
         $duration = $payment_plan['duration'];
-        $down_payment = $lot_price * $down_payment_percentage;
-        $principal = $lot_price - $down_payment;
+        $down_payment = $lot_details['price'] * $down_payment_percentage;
+        $principal = $lot_details['price'] - $down_payment;
         $interest = $principal * $interest_rate;
         $total = $principal + $interest;
         
         $monthly_payment = $duration > 0 ? $total / $duration : 0;
-        $balance = $lot_price + $interest;
+        $balance = $lot_details['price'] + $interest;
 
         // Create reservation
         $sql = "INSERT INTO reservation (account_id, lot_id, payment_plan_id, reservation_date, monthly_payment, balance, request) 
@@ -110,11 +128,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':monthly_payment' => $monthly_payment,
             ':balance' => $balance
         ]);
+        $reservation_id = $db->connect()->lastInsertId();
 
         // Update lot status
         $sql = "UPDATE lots SET status = 'Reserved' WHERE lot_id = :lot_id";
         $query = $db->connect()->prepare($sql);
         $query->execute([':lot_id' => $_POST['lot_id']]);
+
+        // Log reservation creation
+        $client_name = $_POST['account_type'] === 'new' 
+            ? $_POST['last_name'] . ', ' . $_POST['first_name'] . ' ' . $_POST['middle_name']
+            : $existing_account['full_name'];
+
+        $log_details = sprintf(
+            "Created new reservation #%d:\n" .
+            "Client: %s\n" .
+            "Lot: %s (%s)\n" .
+            "Payment Plan: %s\n" .
+            "Monthly Payment: ₱%s\n" .
+            "Total Balance: ₱%s",
+            $reservation_id,
+            $client_name,
+            $lot_details['lot_name'],
+            $lot_details['location'],
+            $payment_plan['plan'],
+            number_format($monthly_payment, 2),
+            number_format($balance, 2)
+        );
+
+        $sql = "INSERT INTO staff_logs (staff_id, action, details) 
+                VALUES (:staff_id, 'Create Reservation', :details)";
+        $query = $db->connect()->prepare($sql);
+        $query->execute([
+            ':staff_id' => $_SESSION['account']['account_id'],
+            ':details' => $log_details
+        ]);
+
+        // Create notification for the customer
+        $notification_message = "Your reservation for " . $lot_details['lot_name'] . " has been created successfully.";
+        $sql = "INSERT INTO notifications (account_id, reference_id, type, message, created_at) 
+                VALUES (:account_id, :reference_id, 'reservation', :message, NOW())";
+        $query = $db->connect()->prepare($sql);
+        $query->execute([
+            ':account_id' => $account_id,
+            ':reference_id' => $reservation_id,
+            ':message' => $notification_message
+        ]);
 
         $db->connect()->commit();
         
@@ -131,7 +190,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ],
             'lot' => [
                 'lot_id' => $_POST['lot_id'],
-                'price' => $lot_price
+                'price' => $lot_details['price']
             ],
             'payment' => [
                 'down_payment' => $down_payment,
@@ -151,7 +210,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     } catch (Exception $e) {
         $db->connect()->rollBack();
-        echo "<script>alert('Error creating reservation: " . $e->getMessage() . "'); window.location.href='" . $_SERVER['PHP_SELF'] . "';</script>";
+        $error_message = addslashes($e->getMessage());
+        echo "<script>alert('Error creating reservation: " . $error_message . "'); window.location.href='" . $_SERVER['PHP_SELF'] . "';</script>";
         exit();
     }
 }
@@ -169,6 +229,8 @@ if (isset($_SESSION['show_summary']) && $_SESSION['show_summary']) {
     <title>Add Reservation - Sto. Nino Parish Cemetery</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <style>
         :root {
             --primary-color: #006064;
@@ -331,6 +393,27 @@ if (isset($_SESSION['show_summary']) && $_SESSION['show_summary']) {
                 margin: 0.25rem 0;
             }
         }
+        
+        /* Select2 Custom Styles */
+        .select2-container--bootstrap-5 .select2-selection {
+            border: 1px solid #ced4da;
+        }
+        .select2-container--bootstrap-5 .select2-selection--single {
+            padding-top: 2px;
+        }
+        .select2-container--bootstrap-5 .select2-dropdown {
+            border-color: #ced4da;
+        }
+        .select2-container--bootstrap-5 .select2-results__option--highlighted[aria-selected] {
+            background-color: var(--primary-color);
+        }
+        .select2-results__options {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .select2-container--bootstrap-5 .select2-selection__rendered {
+            padding-left: 5px !important;
+        }
     </style>
 </head>
 <body>
@@ -373,13 +456,11 @@ if (isset($_SESSION['show_summary']) && $_SESSION['show_summary']) {
                         <div id="existingAccountForm">
                             <div class="mb-3">
                                 <label for="existing_account" class="form-label">Select Existing Account</label>
-                                <select class="form-select" id="existing_account" name="existing_account">
-                                    <option value="">Choose an account...</option>
+                                <select class="form-select searchable" id="existing_account" name="existing_account" data-placeholder="Search for an account...">
+                                    <option value=""></option>
                                     <?php foreach ($existing_accounts as $account): ?>
-                                        <option value="<?php echo $account['account_id']; ?>" 
-                                                data-email="<?php echo $account['email']; ?>"
-                                                data-phone="<?php echo $account['phone_number']; ?>">
-                                            <?php echo $account['full_name']; ?>
+                                        <option value="<?php echo $account['account_id']; ?>">
+                                            <?php echo $account['full_name'] . ' (' . $account['email'] . ')'; ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -421,19 +502,21 @@ if (isset($_SESSION['show_summary']) && $_SESSION['show_summary']) {
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="lot_id" class="form-label">Select Lot</label>
-                                <select class="form-select" id="lot_id" name="lot_id" required>
-                                    <option value="">Choose a lot...</option>
+                                <select class="form-select searchable" id="lot_id" name="lot_id" required data-placeholder="Search for a lot...">
+                                    <option value=""></option>
                                     <?php foreach ($available_lots as $lot): ?>
-                                        <option value="<?php echo $lot['lot_id']; ?>" data-price="<?php echo $lot['price']; ?>">
-                                            <?php echo $lot['lot_name'] . ' - PHP ' . number_format($lot['price'], 2); ?>
+                                        <option value="<?php echo $lot['lot_id']; ?>" 
+                                                data-price="<?php echo $lot['price']; ?>">
+                                            <?php echo $lot['lot_name'] . ' - ' . $lot['location'] . 
+                                                    ' (₱' . number_format($lot['price'], 2) . ')'; ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="payment_plan" class="form-label">Payment Plan</label>
-                                <select class="form-select" id="payment_plan" name="payment_plan" required>
-                                    <option value="">Select payment plan...</option>
+                                <select class="form-select searchable" id="payment_plan" name="payment_plan" required data-placeholder="Search for a payment plan...">
+                                    <option value=""></option>
                                     <?php foreach ($payment_plans as $plan): ?>
                                         <option value="<?php echo $plan['payment_plan_id']; ?>"
                                                 data-down="<?php echo $plan['down_payment']; ?>"
@@ -482,13 +565,23 @@ if (isset($_SESSION['show_summary']) && $_SESSION['show_summary']) {
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     
     <script>
         $(document).ready(function() {
+            // Initialize Select2 for searchable dropdowns
+            $('.searchable').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                allowClear: true,
+                minimumInputLength: 0
+            });
+            
             // Show/hide account forms based on selection
             $('input[name="account_type"]').change(function() {
                 if ($(this).val() === 'existing') {
@@ -554,12 +647,19 @@ if (isset($_SESSION['show_summary']) && $_SESSION['show_summary']) {
                     }
                 }
 
-                if (!$('#lot_id').val() || !$('#payment_plan').val()) {
-                    alert('Please select both a lot and a payment plan');
+                if (!$('#lot_id').val()) {
+                    alert('Please select a lot');
                     isValid = false;
                 }
 
-                return isValid;
+                if (!$('#payment_plan').val()) {
+                    alert('Please select a payment plan');
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    e.preventDefault();
+                }
             });
         });
     </script>
