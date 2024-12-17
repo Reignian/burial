@@ -36,7 +36,7 @@ class Reservation_class{
     }
 
     function getReservationDetails($reservation_id) {
-        $sql = "SELECT pp.plan, r.balance 
+        $sql = "SELECT pp.plan, r.balance, r.monthly_payment
                 FROM reservation r 
                 JOIN payment_plan pp ON r.payment_plan_id = pp.payment_plan_id 
                 WHERE r.reservation_id = :reservation_id";

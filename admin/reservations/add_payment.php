@@ -16,11 +16,13 @@ $lot = isset($_GET['lot']) ? urldecode($_GET['lot']) : '';
 // Get payment plan and balance if reservation_id is set
 $payment_plan = '';
 $balance = 0;
+$monthly_payment = 0;
 if (!empty($reservation_id)) {
     $result = $burialObj->getReservationDetails($reservation_id);
     if ($result) {
         $payment_plan = $result['plan'];
         $balance = $result['balance'];
+        $monthly_payment = $result['monthly_payment'];
     }
 }
 
@@ -32,12 +34,12 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
         $reservation_idErr = 'Reservation is required';
     }
 
-    if(empty($amount_paid)){
+    if(empty($amount_paid) && $amount_paid !== '0'){
         $amount_paidErr = 'Payment is required';
     } else if (!is_numeric($amount_paid)){
         $amount_paidErr = 'Payment should be a number';
-    } else if ($amount_paid < 1){
-        $amount_paidErr = 'Payment must be greater than 0';
+    } else if ($amount_paid < 0){
+        $amount_paidErr = 'Payment must not be a negative number';
     }
 
     if(empty($reservation_idErr) && empty($amount_paidErr)){
@@ -242,6 +244,8 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
                 <?php endif; ?>
                 <?php if ($payment_plan === 'Spot Cash'): ?>
                     <span class="info-text">Full payment required for Spot Cash plan</span>
+                <?php elseif ($monthly_payment > 0): ?>
+                    <span class="info-text">Monthly Payment: ₱<?= number_format($monthly_payment, 2) ?></span>
                 <?php endif; ?>
             </div>
 
