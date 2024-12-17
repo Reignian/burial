@@ -40,6 +40,12 @@
             <h1 class="display-5 fw-bold text-uppercase" style="color: #006064;">RESERVATIONS</h1>
             <div class="border-bottom border-2 w-25 mx-auto" style="border-color: #006064 !important;"></div>
         </div>
+        
+        <div class="d-flex justify-content-end mb-3">
+            <a href="reservations/add_reservation.php" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-1"></i> Add Reservation
+            </a>
+        </div>
 
         <div class="card">
             <div class="card-body">
