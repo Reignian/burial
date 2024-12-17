@@ -74,6 +74,15 @@ class Reservation_class{
             $query->bindParam(':reservation_id', $reservationID);
 
             if($query->execute()){
+                // Update lot status back to Available
+                $sql = "UPDATE lots l 
+                       JOIN reservation r ON l.lot_id = r.lot_id 
+                       SET l.status = 'Available' 
+                       WHERE r.reservation_id = :reservation_id";
+                $query = $this->db->connect()->prepare($sql);
+                $query->bindParam(':reservation_id', $reservationID);
+                $query->execute();
+
                 // Create detailed log
                 if(isset($_SESSION['account']) && isset($_SESSION['account']['account_id'])) {
                     $logDetails = sprintf(

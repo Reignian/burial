@@ -91,7 +91,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $down_payment_percentage = $payment_plan['down_payment'] / 100;
         $interest_rate = $payment_plan['interest_rate'] / 100;
         $duration = $payment_plan['duration'];
-
         $down_payment = $lot_price * $down_payment_percentage;
         $principal = $lot_price - $down_payment;
         $interest = $principal * $interest_rate;
@@ -102,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Create reservation
         $sql = "INSERT INTO reservation (account_id, lot_id, payment_plan_id, reservation_date, monthly_payment, balance, request) 
-                VALUES (:account_id, :lot_id, :payment_plan_id, NOW(), :monthly_payment, :balance, 'Pending')";
+                VALUES (:account_id, :lot_id, :payment_plan_id, NOW(), :monthly_payment, :balance, 'Confirmed')";
         $query = $db->connect()->prepare($sql);
         $query->execute([
             ':account_id' => $account_id,
@@ -113,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
 
         // Update lot status
-        $sql = "UPDATE lots SET status = 'On Request' WHERE lot_id = :lot_id";
+        $sql = "UPDATE lots SET status = 'Reserved' WHERE lot_id = :lot_id";
         $query = $db->connect()->prepare($sql);
         $query->execute([':lot_id' => $_POST['lot_id']]);
 
@@ -160,359 +159,408 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (isset($_SESSION['show_summary']) && $_SESSION['show_summary']) {
     $details = $_SESSION['reservation_details'];
     unset($_SESSION['show_summary']); // Clear flag after showing
-?>
-    <div class="modal fade" id="summaryModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Reservation Summary</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="text-center mb-4">
-                        <h4>Garden of Eternal Life</h4>
-                        <p>Reservation Details</p>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-12">
-                            <h5>Account Information</h5>
-                            <table class="table table-bordered">
-                                <tr>
-                                    <th width="30%">Name:</th>
-                                    <td><?php echo $details['account']['first_name'] . ' ' . $details['account']['middle_name'] . ' ' . $details['account']['last_name']; ?></td>
-                                </tr>
-                                <tr>
-                                    <th>Email:</th>
-                                    <td><?php echo $details['account']['email']; ?></td>
-                                </tr>
-                                <tr>
-                                    <th>Phone:</th>
-                                    <td><?php echo $details['account']['phone_number']; ?></td>
-                                </tr>
-                                <tr class="table-warning">
-                                    <th>Username:</th>
-                                    <td><?php echo $details['account']['username']; ?></td>
-                                </tr>
-                                <tr class="table-warning">
-                                    <th>Password:</th>
-                                    <td><?php echo $details['account']['password']; ?></td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <h5>Payment Details</h5>
-                            <table class="table table-bordered">
-                                <tr>
-                                    <th width="30%">Lot Price:</th>
-                                    <td>₱<?php echo number_format($details['lot']['price'], 2); ?></td>
-                                </tr>
-                                <tr>
-                                    <th>Down Payment:</th>
-                                    <td>₱<?php echo number_format($details['payment']['down_payment'], 2); ?></td>
-                                </tr>
-                                <tr>
-                                    <th>Monthly Payment:</th>
-                                    <td>₱<?php echo number_format($details['payment']['monthly_payment'], 2); ?></td>
-                                </tr>
-                                <tr>
-                                    <th>Interest Rate:</th>
-                                    <td><?php echo $details['payment']['interest_rate']; ?>%</td>
-                                </tr>
-                                <tr>
-                                    <th>Payment Duration:</th>
-                                    <td><?php echo $details['payment']['payment_duration']; ?> months</td>
-                                </tr>
-                                <tr>
-                                    <th>Total Balance:</th>
-                                    <td>₱<?php echo number_format($details['payment']['total_balance'], 2); ?></td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <p class="text-center"><small>Please keep this information secure.</small></p>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="window.print()">Print</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-        $(document).ready(function() {
-            $('#summaryModal').modal('show');
-            
-            // After modal is closed, redirect to reservations page
-            $('#summaryModal').on('hidden.bs.modal', function () {
-                window.location.href = '../reservations.php';
-            });
-        });
-    </script>
-<?php
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Reservation</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Select2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <title>Add Reservation - Sto. Nino Parish Cemetery</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .select2-container .select2-selection--single {
-            height: 38px !important;
+        :root {
+            --primary-color: #006064;
+            --primary-light: #428e92;
+            --primary-dark: #00363a;
+            --accent-color: #ffd54f;
         }
-        .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: 38px !important;
+        
+        body {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
+            min-height: 100vh;
+            padding: 2rem 0;
         }
-        .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 36px !important;
+        
+        .main-card {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background-color: var(--primary-color) !important;
+            border-bottom: none;
+            padding: 1.5rem;
+        }
+        
+        .card-header h4 {
+            color: white;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        .form-label {
+            color: var(--primary-dark);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-control, .form-select {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 0.75rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 0.2rem rgba(0, 96, 100, 0.25);
+        }
+        
+        .btn-group {
+            gap: 0.5rem;
+        }
+        
+        .btn-group .btn {
+            border-radius: 8px !important;
+            flex: 1;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .alert {
+            border-radius: 8px;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .section-title {
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        .account-form, .payment-form {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        #existingAccountForm, #newAccountForm {
+            display: none;
+        }
+        
+        .modal-content {
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .modal-header {
+            background-color: var(--primary-color);
+            color: white;
+            border-bottom: none;
+        }
+        
+        .modal-title {
+            font-weight: 600;
+        }
+        
+        .modal-body {
+            padding: 2rem;
+        }
+        
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table th {
+            background-color: rgba(0, 96, 100, 0.05);
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+        
+        .table-warning {
+            background-color: #fff3e0 !important;
+        }
+        
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding: 1rem;
+            }
+            
+            .card-body {
+                padding: 1.5rem;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .btn-group .btn {
+                width: 100%;
+                margin: 0.25rem 0;
+            }
         }
     </style>
 </head>
-<body class="bg-light">
-    <div class="container-fluid px-4 py-4">
+<body>
+    <div class="container">
         <?php if (isset($_SESSION['error_message'])): ?>
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 <?php 
                     echo $_SESSION['error_message'];
                     unset($_SESSION['error_message']);
                 ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
 
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card shadow">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0">Add New Reservation</h4>
-                    </div>
-                    <div class="card-body">
-                        <form method="POST" action="">
-                            <!-- Account Selection -->
-                            <div class="mb-4">
-                                <label class="form-label">Account Type</label>
-                                <div class="btn-group w-100" role="group">
-                                    <input type="radio" class="btn-check" name="account_type" id="new_account" value="new" checked>
-                                    <label class="btn btn-outline-primary" for="new_account">Create New Account</label>
-                                    
-                                    <input type="radio" class="btn-check" name="account_type" id="existing_account" value="existing">
-                                    <label class="btn btn-outline-primary" for="existing_account">Select Existing Account</label>
-                                </div>
+        <div class="main-card">
+            <div class="card-header">
+                <h4><i class="fas fa-plus-circle me-2"></i>Add New Reservation</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="">
+                    <!-- Account Selection -->
+                    <div class="account-form">
+                        <h5 class="section-title"><i class="fas fa-user me-2"></i>Account Information</h5>
+                        <div class="mb-4">
+                            <label class="form-label">Select Account Type</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="account_type" id="existing_account_radio" value="existing" checked>
+                                <label class="btn btn-outline-primary" for="existing_account_radio">
+                                    <i class="fas fa-users me-2"></i>Existing Account
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="account_type" id="new_account_radio" value="new">
+                                <label class="btn btn-outline-primary" for="new_account_radio">
+                                    <i class="fas fa-user-plus me-2"></i>New Account
+                                </label>
                             </div>
-
-                            <!-- New Account Form -->
-                            <div id="new_account_form">
-                                <div class="row">
-                                    <div class="col-md-4 mb-3">
-                                        <label for="first_name" class="form-label">First Name</label>
-                                        <input type="text" class="form-control" id="first_name" name="first_name" required>
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <label for="middle_name" class="form-label">Middle Name</label>
-                                        <input type="text" class="form-control" id="middle_name" name="middle_name">
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <label for="last_name" class="form-label">Last Name</label>
-                                        <input type="text" class="form-control" id="last_name" name="last_name" required>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="email" class="form-label">Email</label>
-                                        <input type="email" class="form-control" id="email" name="email" required>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="phone_number" class="form-label">Phone Number</label>
-                                        <input type="text" class="form-control" id="phone_number" name="phone_number" required>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Existing Account Selection -->
-                            <div id="existing_account_form" style="display: none;">
-                                <div class="mb-3">
-                                    <label for="existing_account" class="form-label">Select Account</label>
-                                    <select class="form-select" id="existing_account_select" name="existing_account">
-                                        <option value="">Select an account</option>
-                                        <?php foreach ($existing_accounts as $account): ?>
-                                            <option value="<?= $account['account_id'] ?>"><?= $account['full_name'] ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <hr class="my-4">
-
-                            <!-- Lot Selection -->
+                        </div>
+                        
+                        <!-- Existing Account Form -->
+                        <div id="existingAccountForm">
                             <div class="mb-3">
-                                <label for="lot_id" class="form-label">Select Available Lot</label>
-                                <select class="form-select" id="lot_id" name="lot_id" required>
-                                    <option value="">Select a lot</option>
-                                    <?php foreach ($available_lots as $lot): ?>
-                                        <option value="<?= $lot['lot_id'] ?>" data-price="<?= $lot['price'] ?>">
-                                            <?= $lot['lot_name'] ?> - <?= $lot['location'] ?> (₱<?= number_format($lot['price'], 2) ?>)
+                                <label for="existing_account" class="form-label">Select Existing Account</label>
+                                <select class="form-select" id="existing_account" name="existing_account">
+                                    <option value="">Choose an account...</option>
+                                    <?php foreach ($existing_accounts as $account): ?>
+                                        <option value="<?php echo $account['account_id']; ?>" 
+                                                data-email="<?php echo $account['email']; ?>"
+                                                data-phone="<?php echo $account['phone_number']; ?>">
+                                            <?php echo $account['full_name']; ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
+                        </div>
+                        
+                        <!-- New Account Form -->
+                        <div id="newAccountForm">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="first_name" class="form-label">First Name</label>
+                                    <input type="text" class="form-control" id="first_name" name="first_name">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="middle_name" class="form-label">Middle Name</label>
+                                    <input type="text" class="form-control" id="middle_name" name="middle_name">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="last_name" class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" id="last_name" name="last_name">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" id="email" name="email">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="phone_number" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phone_number" name="phone_number">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                            <!-- Payment Plan -->
-                            <div class="mb-3">
+                    <!-- Lot and Payment Information -->
+                    <div class="payment-form">
+                        <h5 class="section-title"><i class="fas fa-money-bill-wave me-2"></i>Lot and Payment Details</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="lot_id" class="form-label">Select Lot</label>
+                                <select class="form-select" id="lot_id" name="lot_id" required>
+                                    <option value="">Choose a lot...</option>
+                                    <?php foreach ($available_lots as $lot): ?>
+                                        <option value="<?php echo $lot['lot_id']; ?>" data-price="<?php echo $lot['price']; ?>">
+                                            <?php echo $lot['lot_name'] . ' - PHP ' . number_format($lot['price'], 2); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
                                 <label for="payment_plan" class="form-label">Payment Plan</label>
                                 <select class="form-select" id="payment_plan" name="payment_plan" required>
-                                    <option value="">Select Payment Plan</option>
+                                    <option value="">Select payment plan...</option>
                                     <?php foreach ($payment_plans as $plan): ?>
-                                        <option value="<?= $plan['payment_plan_id'] ?>" 
-                                                data-duration="<?= $plan['duration'] ?>"
-                                                data-downpayment="<?= $plan['down_payment'] ?>"
-                                                data-interest="<?= $plan['interest_rate'] ?>">
-                                            <?= $plan['plan'] . ' (' . $plan['down_payment'] . '% DP, ' . $plan['interest_rate'] . '% Interest)'; ?>
+                                        <option value="<?php echo $plan['payment_plan_id']; ?>"
+                                                data-down="<?php echo $plan['down_payment']; ?>"
+                                                data-interest="<?php echo $plan['interest_rate']; ?>"
+                                                data-duration="<?php echo $plan['duration']; ?>">
+                                            <?php echo $plan['plan'] . ' (' . $plan['down_payment'] . '% DP, ' . 
+                                                    $plan['interest_rate'] . '% interest)'; ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
+                        </div>
 
-                            <!-- Payment Details Preview -->
-                            <div id="payment_details" class="mb-3" style="display: none;">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Payment Details</h5>
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <p class="mb-1">Lot Price: <span id="lot_price">₱0.00</span></p>
-                                                <p class="mb-1">Down Payment: <span id="down_payment">₱0.00</span></p>
-                                                <p class="mb-1">Interest Rate: <span id="interest">0</span>%</p>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <p class="mb-1">Monthly Payment: <span id="monthly">₱0.00</span></p>
-                                                <p class="mb-1">Duration: <span id="duration">0</span> months</p>
-                                                <p class="mb-1">Total Balance: <span id="total">₱0.00</span></p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div id="payment_summary" class="mt-4" style="display: none;">
+                            <h6 class="mb-3">Payment Summary</h6>
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <tr>
+                                        <th>Lot Price:</th>
+                                        <td id="lot_price_display">PHP 0.00</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Down Payment:</th>
+                                        <td id="down_payment_display">PHP 0.00</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Monthly Payment:</th>
+                                        <td id="monthly_payment_display">PHP 0.00</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Total Balance:</th>
+                                        <td id="total_balance_display">PHP 0.00</td>
+                                    </tr>
+                                </table>
                             </div>
-
-                            <div class="d-flex justify-content-end gap-2 mt-4">
-                                <a href="../reservations.php" class="btn btn-secondary">Cancel</a>
-                                <button type="submit" class="btn btn-primary">Save Reservation</button>
-                            </div>
-                        </form>
+                        </div>
                     </div>
-                </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-2"></i>Create Reservation
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
     <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Select2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     
     <script>
         $(document).ready(function() {
-            // Initialize Select2
-            $('#existing_account_select, #lot_id, #payment_plan').select2();
-
-            // Handle account type toggle
+            // Show/hide account forms based on selection
             $('input[name="account_type"]').change(function() {
-                if ($(this).val() === 'new') {
-                    $('#new_account_form').show();
-                    $('#existing_account_form').hide();
-                    $('#existing_account_select').prop('required', false);
-                    $('#new_account_form input').prop('required', true);
+                if ($(this).val() === 'existing') {
+                    $('#existingAccountForm').slideDown();
+                    $('#newAccountForm').slideUp();
+                    // Clear new account form
+                    $('#newAccountForm input').val('');
                 } else {
-                    $('#new_account_form').hide();
-                    $('#existing_account_form').show();
-                    $('#existing_account_select').prop('required', true);
-                    $('#new_account_form input').prop('required', false);
+                    $('#newAccountForm').slideDown();
+                    $('#existingAccountForm').slideUp();
+                    // Clear existing account selection
+                    $('#existing_account').val('');
                 }
             });
 
-            // Form validation before submit
-            $('form').on('submit', function(e) {
-                const accountType = $('input[name="account_type"]:checked').val();
-                
-                if (accountType === 'new') {
-                    // Check if all required new account fields are filled
-                    const firstName = $('#first_name').val().trim();
-                    const lastName = $('#last_name').val().trim();
-                    const email = $('#email').val().trim();
-                    const phone = $('#phone_number').val().trim();
+            // Trigger initial state
+            $('input[name="account_type"]:checked').change();
+
+            // Calculate payments when lot or payment plan changes
+            $('#lot_id, #payment_plan').change(function() {
+                calculatePayments();
+            });
+
+            function calculatePayments() {
+                var lot_price = parseFloat($('#lot_id option:selected').data('price')) || 0;
+                var down_payment_percent = parseFloat($('#payment_plan option:selected').data('down')) || 0;
+                var interest_rate = parseFloat($('#payment_plan option:selected').data('interest')) || 0;
+                var duration = parseInt($('#payment_plan option:selected').data('duration')) || 0;
+
+                if (lot_price && down_payment_percent && duration) {
+                    var down_payment = lot_price * (down_payment_percent / 100);
+                    var principal = lot_price - down_payment;
+                    var interest = principal * (interest_rate / 100);
+                    var total = principal + interest;
+                    var monthly_payment = duration > 0 ? total / duration : 0;
+
+                    $('#lot_price_display').text('PHP ' + lot_price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                    $('#down_payment_display').text('PHP ' + down_payment.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                    $('#monthly_payment_display').text('PHP ' + monthly_payment.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                    $('#total_balance_display').text('PHP ' + (lot_price + interest).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
                     
-                    if (!firstName || !lastName || !email || !phone) {
-                        e.preventDefault();
-                        alert('Please fill in all required account information fields');
-                        return false;
-                    }
+                    $('#payment_summary').slideDown();
                 } else {
-                    // Check if existing account is selected
-                    if (!$('#existing_account_select').val()) {
-                        e.preventDefault();
-                        alert('Please select an existing account');
-                        return false;
-                    }
-                }
-
-                // Check if lot and payment plan are selected
-                if (!$('#lot_id').val() || !$('#payment_plan').val()) {
-                    e.preventDefault();
-                    alert('Please select both lot and payment plan');
-                    return false;
-                }
-            });
-
-            // Calculate payment details
-            function updatePaymentDetails() {
-                const lotSelect = $('#lot_id');
-                const planSelect = $('#payment_plan');
-                
-                if (lotSelect.val() && planSelect.val()) {
-                    const lotPrice = parseFloat(lotSelect.find(':selected').data('price'));
-                    const duration = parseInt(planSelect.find(':selected').data('duration'));
-                    const downPaymentPercentage = parseFloat(planSelect.find(':selected').data('downpayment'));
-                    const interestRate = parseFloat(planSelect.find(':selected').data('interest'));
-
-                    const downPayment = (lotPrice * downPaymentPercentage) / 100;
-                    const principal = lotPrice - downPayment;
-                    const interest = principal * (interestRate / 100);
-                    const total = principal + interest;
-                    const monthly = duration > 0 ? total / duration : 0;
-
-                    $('#lot_price').text('₱' + lotPrice.toFixed(2));
-                    $('#down_payment').text('₱' + downPayment.toFixed(2));
-                    $('#interest').text(interestRate);
-                    $('#monthly').text('₱' + monthly.toFixed(2));
-                    $('#duration').text(duration);
-                    $('#total').text('₱' + (lotPrice + interest).toFixed(2));
-
-                    $('#payment_details').show();
-                } else {
-                    $('#payment_details').hide();
+                    $('#payment_summary').slideUp();
                 }
             }
 
-            $('#lot_id, #payment_plan').change(updatePaymentDetails);
+            // Form validation
+            $('form').submit(function(e) {
+                var isValid = true;
+                var account_type = $('input[name="account_type"]:checked').val();
+
+                if (account_type === 'existing') {
+                    if (!$('#existing_account').val()) {
+                        alert('Please select an existing account');
+                        isValid = false;
+                    }
+                } else {
+                    // Validate new account fields
+                    if (!$('#first_name').val() || !$('#last_name').val() || !$('#email').val() || !$('#phone_number').val()) {
+                        alert('Please fill in all required fields for the new account');
+                        isValid = false;
+                    }
+                }
+
+                if (!$('#lot_id').val() || !$('#payment_plan').val()) {
+                    alert('Please select both a lot and a payment plan');
+                    isValid = false;
+                }
+
+                return isValid;
+            });
         });
     </script>
 </body>
