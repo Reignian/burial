@@ -8,9 +8,9 @@ if(!isset($_SESSION['account']) || !($_SESSION['account']['is_admin'] || $_SESSI
     exit();
 }
 
-// Check if there are reservation details in session
-if (!isset($_SESSION['reservation_details'])) {
-    header('Location: ../reservations.php');
+// Check if there are reservation details to show
+if(!isset($_SESSION['reservation_details'])){
+    header('location: ../reservations.php');
     exit();
 }
 

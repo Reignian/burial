@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/reservations.class.php';
 require_once __DIR__ . '/../../database.php';
+require_once __DIR__ . '/../includes/email_functions.php';
 
 if(!isset($_SESSION['account']) || !($_SESSION['account']['is_admin'] || $_SESSION['account']['is_staff'])){
     header('location: ../../sign/login.php');
@@ -141,8 +142,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'payment_duration' => $duration
             ]
         ];
+
+        // Send email for new accounts
+        if ($_POST['account_type'] === 'new') {
+            sendReservationSummaryEmail($_SESSION['reservation_details']);
+        }
         
-        $name = $_POST['account_type'] === 'new' ? $_POST['first_name'] . ' ' . $_POST['last_name'] : $existing_account['first_name'] . ' ' . $existing_account['last_name'];
         echo "<script>alert('Reservation created successfully!'); window.location.href='reservation_summary.php';</script>";
         exit();
     } catch (Exception $e) {
