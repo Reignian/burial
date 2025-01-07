@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $mail->Host = 'smtp.gmail.com';
                 $mail->SMTPAuth = true;
                 $mail->Username = 'stoninoparishcemetery@gmail.com'; // Your Gmail address
-                $mail->Password = 'vbfq umvs ibff xxjv'; // Your Gmail password or App Password
+                $mail->Password = 'bard dfij luov ohwm'; // Your Gmail password or App Password
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                 $mail->Port = 587;
 

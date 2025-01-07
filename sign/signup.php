@@ -90,7 +90,7 @@
                 $mail->Host = 'smtp.gmail.com';
                 $mail->SMTPAuth = true;
                 $mail->Username = 'stoninoparishcemetery@gmail.com';
-                $mail->Password = 'vbfq umvs ibff xxjv';
+                $mail->Password = 'bard dfij luov ohwm';
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                 $mail->Port = 587;
 
