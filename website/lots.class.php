@@ -303,6 +303,13 @@ class Reservation{
             $total_penalties = 0;
             $penalties_applied = false;
 
+            // Get account_id for the reservation
+            $sqlGetAccount = "SELECT account_id FROM reservation WHERE reservation_id = :reservation_id";
+            $queryGetAccount = $conn->prepare($sqlGetAccount);
+            $queryGetAccount->bindParam(':reservation_id', $reservation_id);
+            $queryGetAccount->execute();
+            $account_id = $queryGetAccount->fetchColumn();
+
             foreach ($months_missed as $missed_date) {
                 $formatted_date = $missed_date->format('Y-m-d H:i:s');
                 $formatted_month = $missed_date->format('Y-m');
@@ -333,6 +340,17 @@ class Reservation{
                     if (!$queryLogPenalty->execute()) {
                         throw new Exception("Failed to log penalty");
                     }
+
+                    // Create notification for missed payment
+                    require_once(__DIR__ . '/notification.class.php');
+                    $notification = new Notification();
+                    $notification->createNotification(
+                        $account_id,
+                        'payment_missed',
+                        'Missed Payment Penalty Applied',
+                        "A penalty of ₱" . number_format($penalty_amount, 2) . " has been applied to your account for missing the payment due on " . $missed_date->format('F j, Y'),
+                        $reservation_id
+                    );
 
                     $total_penalties += $penalty_amount;
                     $penalties_applied = true;
